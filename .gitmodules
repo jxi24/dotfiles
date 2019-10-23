@@ -1,0 +1,3 @@
+[submodule "check_arxiv"]
+	path = check_arxiv
+	url = https://github.com/jxi24/check_arxiv.git
