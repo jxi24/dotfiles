@@ -28,12 +28,15 @@ set-option -g set-titles-string "#T - #W"
 # Don't rename windows automatically
 set-option -g allow-rename off
 
+# Renumber windows on close
+set-option -g renumber-windows on
+
 # Turn on focus-event
 set -g focus-events on
 
 # Turn on powerline
-run-shell "powerline-daemon -q"
-source "/home/isaacson/Programs/anaconda3/lib/python3.7/site-packages/powerline/bindings/tmux/powerline.conf"
+# run-shell "powerline-daemon -q"
+# source "/home/isaacson/Programs/anaconda3/lib/python3.7/site-packages/powerline/bindings/tmux/powerline.conf"
 
 ####################
 ### Key Bindings ###
@@ -61,11 +64,12 @@ setw -g mouse on
 setw -g mode-keys vi
 # more settings to make copy-mode more vim-like
 unbind [
-bind Escape copy-mode
+bind v copy-mode
 unbind p
 bind p paste-buffer
 bind-key -T copy-mode-vi 'v' send -X begin-selection
 bind-key -T copy-mode-vi 'y' send -X copy-pipe-and-cancel "xclip -in -selection clipboard"
+bind-key -T copy-mode-vi Escape send -X cancel
 
 # clear screen
 bind C-l send-keys 'C-l'
@@ -76,7 +80,11 @@ bind C-l send-keys 'C-l'
 
 set -g default-terminal "xterm-256color"
 set -ga terminal-overrides ",xterm-256color:Tc"
-# source ~/.dotfiles/tmux/base16.sh
+source ~/.dotfiles/tmux/base16.sh
+
+
+# Auto save session
+set -g @continuum-restore 'on'
 
 ###############
 ### Plugins ###
@@ -87,5 +95,8 @@ set -g @plugin 'tmux-plugins/tpm'
 set -g @plugin 'tmux-plugins/tmux-sensible'
 set -g @plugin 'christoomey/vim-tmux-navigator'
 set -g @plugin 'tmux-plugins/tmux-sidebar'
+set -g @plugin 'pwittchen/tmux-plugin-spotify'
+set -g @plugin 'tmux-plugins/tmux-resurrect'
+set -g @plugin 'tmux-plugins/tmux-continuum'
 
 run -b '~/.tmux/plugins/tpm/tpm'
