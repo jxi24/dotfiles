@@ -1,0 +1,6 @@
+#!/usr/bin/env python3
+""" Call the inspires API for many different functions.
+    - Create publication list
+    - Get entries
+    - etc.
+""'

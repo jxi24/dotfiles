@@ -1,7 +1,12 @@
+let g:python3_host_prog = '~/Programs/anaconda3/bin/python'
 " ensure vim-plug is installed and then load it
-
 call functions#PlugLoad()
 call plug#begin('~/.config/nvim/plugged')
+
+" Test vim-bibtex {{{
+    Plug 'jxi24/vim-bibtex', { 'do': ':UpdateRemotePlugins' }
+    let g:vim_bibtex_name = 'joshua isaacson'
+" }}}
 
 " General {{{
     " Abbreviations
@@ -22,6 +27,7 @@ call plug#begin('~/.config/nvim/plugged')
     endif
 
     set backspace=indent,eol,start " make backspace behave in a sane manner
+    set clipboard=unnamed
 
     if has('mouse')
         set mouse=a
@@ -48,7 +54,7 @@ call plug#begin('~/.config/nvim/plugged')
     set wrap " turn on line wrapping
     set wrapmargin=8 " wrap lines when coming within n characters of side
     set linebreak " set soft wrapping
-    set showbreak=... " show ellipsis at breaking
+    set showbreak=… " show ellipsis at breaking
     set autoindent " automatically set indent of new line
     set ttyfast " faster redrawing
     set diffopt+=vertical,iwhite,algorithm:patience,hiddenoff
@@ -69,6 +75,10 @@ call plug#begin('~/.config/nvim/plugged')
     set shortmess+=c
     set background=dark
     set wildignore=.git,*.o,*.a,*.exe,*.la,*.so,*.obj,*.jpg,*.png
+
+    " Split right and below
+    set splitbelow
+    set splitright
 
     " Tab control
     set smarttab " tab respects 'tapstop', 'shiftwidth', and 'softtabstop'
@@ -93,9 +103,14 @@ call plug#begin('~/.config/nvim/plugged')
     set foldmethod=syntax " fold based on indent
     set foldlevelstart=99
     set foldnestmax=10 " deepest fold is 10 levels
+    set nofoldenable " don't fold by default
     set foldlevel=1
 
     set t_Co=256 " Expilicty tell vim that the terminal supports 256 colors
+    " switch cursor to line when in insert mode, and block when not
+    set guicursor=n-v-c:block,i-ci-ve:ver25,r-cr:hor20,o:hor50
+                \,a:blinkwait700-blinkoff400-blinkon250-Cursor/lCursor
+                \,sm:block-blinkwait175-blinkoff150-blinkon175
 
     if &term =~ '256color'
         " disable background color erase
@@ -166,6 +181,7 @@ call plug#begin('~/.config/nvim/plugged')
 " General Mappings {{{
     " set a map leader for more key combos
     let mapleader = ','
+    let maplocalleader = '<'
 
     " remap esc
     inoremap jk <esc>
@@ -198,8 +214,15 @@ call plug#begin('~/.config/nvim/plugged')
     inoremap <expr> <C-j> pumvisible() ? "\<C-N>" : "\<C-j>"
     inoremap <expr> <C-k> pumvisible() ? "\<C-P>" : "\<C-j>"
 
+    " keep visual selection when indenting/outdenting
+    vmap < <gv
+    vmap > >gv
+
     " switch between current and last buffer
     nmap <leader>. <c-^>
+
+    " enable . command in visual mode
+    vnoremap . :normal .<cr>
 
     " map <silent> <C-h> <Plug>WinMoveLeft
     " map <silent> <C-j> <Plug>WinMoveDown
@@ -208,6 +231,9 @@ call plug#begin('~/.config/nvim/plugged')
 
     " Custom plugin remaps
     nmap <silent><leader>z <Plug>Zoom
+
+    " Close window
+    map <leader>wc :wincmd q<cr>
 
     " Increment numbers and letters
     " Use = instead of + to make it easier
@@ -229,6 +255,22 @@ call plug#begin('~/.config/nvim/plugged')
     nnoremap <silent> k gk
     nnoremap <silent> ^ g^
     nnoremap <silent> $ g$
+    vnoremap <silent> j gj
+    vnoremap <silent> k gk
+    vnoremap <silent> ^ g^
+    vnoremap <silent> $ g$
+
+    " inner-line
+    xnoremap <silent> il :<c-u>normal! g_v^<cr>
+    onoremap <silent> il :<c-u>normal! g_v^<cr>
+
+    " around line
+    xnoremap <silent> al :<c-u>normal! $v0<cr>
+    onoremap <silent> al :<c-u>normal! $v0<cr>
+
+    " Split windows
+    nmap <silent><leader>\ :vsplit<cr>
+    nmap <silent><leader>- :split<cr>
 
 " }}}
 
@@ -236,6 +278,9 @@ call plug#begin('~/.config/nvim/plugged')
     " file type specific settings
     augroup configgroup
         autocmd!
+
+        " automatically resize panes on resize
+        autocmd VimResized * exe 'normal! \<c-w>='
 
         " save all files on focus lost, ignoring warnings about untitled buffers
         autocmd FocusLost * silent! wa
@@ -251,10 +296,25 @@ call plug#begin('~/.config/nvim/plugged')
     " substitute, search, and abbreviate multiple variants of a word
     Plug 'tpope/vim-abolish'
 
+    " Easy commenting motions
+    Plug 'tpope/vim-commentary'
+
+    " mappings which are simply short normal mode aliases for commonly used ex commands
+    Plug 'tpope/vim-unimpaired'
+
+    " mappings to easily delete, change and add such surroundings in paris, such as quotes, parens, etc.
+    Plug 'tpope/vim-surround'
+
     " tmux integration for vim
     Plug 'benmills/vimux'
     Plug 'christoomey/vim-tmux-navigator'
-    Plug 'ryanoasis/vim-devicons'
+
+    " enables repeating other supported plugins with the . command
+    Plug 'tpope/vim-repeat'
+
+    " add end, endif, etc. automatically
+    Plug 'tpope/vim-endwise'
+
 
     let g:tmux_navigator_save_on_switch = 1
     let g:tmux_navigator_disable_when_zoomed = 1
@@ -289,15 +349,13 @@ call plug#begin('~/.config/nvim/plugged')
         let g:startify_bookmarks = [
             \ { 'c': '~/.config/nvim/init.vim' },
             \ { 'g': '~/.gitconfig' },
-            \ { 'b': '~/.bashrc' }
+            \ { 'b': '~/.bashrc' },
+            \ { 'o': '~/org/main.org' }
         \ ]
 
         autocmd User Startified setlocal cursorline
         nmap <leader>st :Startify<cr>
     " }}}
-
-    " add end, endif, etc. automatically
-    Plug 'tpope/vim-endwise'
 
     " context-aware pasting
     Plug 'sickill/vim-pasta'
@@ -306,6 +364,7 @@ call plug#begin('~/.config/nvim/plugged')
         Plug 'scrooloose/nerdtree', { 'on': ['NERDTreeToggle', 'NERDTreeFind'] }
         Plug 'Xuyuanp/nerdtree-git-plugin'
         Plug 'ryanoasis/vim-devicons'
+        Plug 'tiagofumo/vim-nerdtree-syntax-highlight'
         let g:WebDevIconsUnicodeDecorateFolderNodes = 1
         let g:DevIconsEnableFoldersOpenClose = 1
         let g:DevIconsEnableFolderExtensionPatternMatching = 1
@@ -392,8 +451,16 @@ call plug#begin('~/.config/nvim/plugged')
 
         nmap <silent> <leader>gs :Gstatus<cr>
         nmap <leader>ge :Gedit<cr>
-        nmap <leader>gP :! git push<CR>
-        nmap <leader>gG :! git pull<CR>
+        nmap <leader>gP :! git push<cr>
+        nmap <leader>gG :! git pull<cr>
+    " }}} 
+    
+    " vimagit {{{
+        Plug 'jreybert/vimagit'
+        nmap <leader>g :Magit<cr>
+        autocmd User VimagitEnterCommit startinsert
+        autocmd User VimagitEnterCommit setlocal textwidth=72
+        autocmd User VimagitLeaveCommit setlocal textwidth=120
     " }}}
 
     " UltiSnips {{{
@@ -417,7 +484,7 @@ call plug#begin('~/.config/nvim/plugged')
         \ 'coc-texlab',
         \]
 
-        " autocmd CursorHold * silent call CocActionAsync('highlight')
+        autocmd CursorHold * silent call CocActionAsync('highlight')
 
         " coc-git
         nmap [g <Plug>(coc-git-prevchunk)
@@ -433,6 +500,7 @@ call plug#begin('~/.config/nvim/plugged')
         nmap <silent> gh <Plug>(coc-doHover)
 
         " diagnostics navigation
+        nmap <silent> <leader>c <plug>(coc-list-diagnostics)
         nmap <silent> [c <plug>(coc-diagnostic-prev)
         nmap <silent> ]c <plug>(coc-diagnostic-next)
 
@@ -466,39 +534,36 @@ call plug#begin('~/.config/nvim/plugged')
             return !col || getline('.')[col - 1] =~# '\s'
         endfunction
 
-	" Buffergator {{{
-	    Plug 'jeetsukumaran/vim-buffergator'
-	    " Use the right side of the screen
-	    let g:buffergator_viewport_split_policy = 'R'
+    " }}}
+" }}}
 
-	    " I want my own keymappings
-	    let g:buffergator_suppress_keymaps = 1
-
-	    " Go to the previous buffer open
-	    nmap <leader>h :BuffergatorMruCyclePrev<CR>
-
-	    " Go to the next buffer open
-	    nmap <leader>l :BuffergatorMruCycleNext<CR>
-
-	    " List all open buffer open
-	    nmap <leader>bl :BuffergatorToggle<CR>
-	" }}}
-
+" Language-Specific Configuration {{{
+    " cpp {{{
+        Plug 'bfrg/vim-cpp-modern'
+        let g:cpp_simple_highlight = 1
     " }}}
 
-    " Language-Specific Configuration {{{
-        " cpp {{{
-            Plug 'bfrg/vim-cpp-modern'
-            let g:cpp_simple_highlight = 1
-        " }}}
-
-        " markdown {{{
-            Plug 'tpope/vim-markdown', { 'for': 'markdown' }
-        " }}}
-
-        " python {{{
-        " }}}
+    " markdown {{{
+        Plug 'tpope/vim-markdown', { 'for': 'markdown' }
     " }}}
+
+    " python {{{
+    " }}}
+" }}}
+
+" Org Mode {{{
+    Plug 'jceb/vim-orgmode'
+  
+    " edit org file
+    map <leader>eo :e! ~/org/<cr>
+    let g:org_agenda_files = ['~/org/*.org']
+    let g:org_indent = 1
+" }}}
+"
+" Calendar {{{
+    Plug 'itchyny/calendar.vim'
+    let g:calendar_google_calendar = 1
+    let g:calendar_google_task = 1
 " }}}
 
 call plug#end()
