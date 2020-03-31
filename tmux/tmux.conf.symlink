@@ -51,6 +51,10 @@ bind - split-window -v -c "#{pane_current_path}"
 unbind '"'
 unbind %
 
+# Swap windows
+bind -n C-S-Left swap-window -t -1
+bind -n C-S-Right swap-window -t +1
+
 # synchronize all panes in a window
 bind y setw synchronize-panes
 

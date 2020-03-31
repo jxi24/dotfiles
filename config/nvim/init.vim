@@ -201,7 +201,7 @@ call plug#begin('~/.config/nvim/plugged')
     noremap <space> :set hlsearch! hlsearch?<cr>
 
     " activate spell-checking alternatives
-    nmap ;s :set invspell spelling=en<cr>
+    nmap ;s :set invspell spelling=en_us<cr>
 
     " markdown to html
     nmap <leader>md :%!markdown --html4tags <cr>
@@ -213,6 +213,8 @@ call plug#begin('~/.config/nvim/plugged')
     " autocomplete movement
     inoremap <expr> <C-j> pumvisible() ? "\<C-N>" : "\<C-j>"
     inoremap <expr> <C-k> pumvisible() ? "\<C-P>" : "\<C-j>"
+
+    nmap <leader>l :set list!<cr>
 
     " keep visual selection when indenting/outdenting
     vmap < <gv
@@ -281,6 +283,9 @@ call plug#begin('~/.config/nvim/plugged')
 
         " automatically resize panes on resize
         autocmd VimResized * exe 'normal! \<c-w>='
+
+        " automatically source certain files
+        autocmd BufWritePost .vimrc, .vimrclocal, init.vim source %
 
         " save all files on focus lost, ignoring warnings about untitled buffers
         autocmd FocusLost * silent! wa
@@ -356,6 +361,10 @@ call plug#begin('~/.config/nvim/plugged')
         autocmd User Startified setlocal cursorline
         nmap <leader>st :Startify<cr>
     " }}}
+    
+    " Close buffers but keep splits
+    Plug 'moll/vim-bbye'
+    nmap <leader>b :Bdelete<cr>
 
     " context-aware pasting
     Plug 'sickill/vim-pasta'
@@ -399,7 +408,7 @@ call plug#begin('~/.config/nvim/plugged')
 	endfunction
 
         " Toggle NERDTree
-        nmap <silent> <leader>k :call ToggleNerdTree()<CR>
+        " nmap <silent> <leader>k :call ToggleNerdTree()<CR>
         " find the current file in nerdtree without needing to reload the drawer
         nmap <silent> <leader>y <Plug>NERDTreeFind<CR>
 
@@ -466,9 +475,9 @@ call plug#begin('~/.config/nvim/plugged')
     " UltiSnips {{{
         Plug 'SirVer/ultisnips' " Snippets plugin
         Plug 'honza/vim-snippets'
-        let g:UltiSnipsExpandTrigger="<C-l>"
-        let g:UltiSnipsJumpForwardTrigger="<C-j>"
-        let g:UltiSnipsJumpBackwardTrigger="<C-k>"
+        " let g:UltiSnipsExpandTrigger="<C-l>"
+        " let g:UltiSnipsJumpForwardTrigger="<C-j>"
+        " let g:UltiSnipsJumpBackwardTrigger="<C-k>"
         let g:ultisnips_python_style="google"
     " }}}
 
@@ -476,12 +485,15 @@ call plug#begin('~/.config/nvim/plugged')
         Plug 'neoclide/coc.nvim', {'branch': 'release'}
 
         let g:coc_global_extensions = [
+        \ 'coc-clangd',
         \ 'coc-git',
         \ 'coc-sh',
         \ 'coc-emmet',
         \ 'coc-yaml',
         \ 'coc-python',
         \ 'coc-texlab',
+        \ 'coc-snippets',
+        \ 'coc-explorer'
         \]
 
         autocmd CursorHold * silent call CocActionAsync('highlight')
@@ -492,6 +504,51 @@ call plug#begin('~/.config/nvim/plugged')
         nmap gs <Plug>(coc-git-chunkinfo)
         nmap gu :CocCommand git.chunkUndo<cr>
 
+        " coc-explorer
+        let g:coc_explorer_global_presets = {
+        \   '.vim': {
+        \       'root-uri': '~/.vim',
+        \   },
+        \   'floating': {
+        \       'position': 'floating',
+        \   },
+        \   'floatingLeftside': {
+        \      'position': 'floating',
+        \      'floating-position': 'left-center',
+        \      'floating-width': 50,
+        \   },
+        \   'floatingRightside': {
+        \      'position': 'floating',
+        \      'floating-position': 'left-center',
+        \      'floating-width': 50,
+        \   },
+        \   'simplify': {
+        \     'file.child.template': '[selection | clip | 1] [indent][icon | 1] [filename omitCenter 1]'
+        \   }
+        \ }
+
+        nmap <silent> <leader>k :CocCommand explorer<CR>
+        nmap <silent> <leader>kf :CocCommand explorer --preset floating<CR>
+
+        " coc-snippets {{{
+            imap <C-l> <Plug>(coc-snippets-expand)
+
+            " Use <C-j> for select text for visual placeholder of snippet
+            vmap <C-j> <Plug>(coc-snippets-select)
+
+            " Use <C-j> for both expand and jump (make expand higher priority.)
+            imap <C-j> <Plug>(coc-snippets-expand-jump)
+
+            " Make <tab> used for trigger completion, completion confirm, snippet expand and jump like VSCode
+            inoremap <silent><expr> <TAB>
+                \ pumvisible() ? coc#_select_confirm() :
+                \ coc#expandableOrJumpable() ? "\<C-r>=coc#rpc#request('doKeymap', ['snippets-expand-jump'], ''])\<CR>" :
+                \ <SID>check_back_space() ? "\<TAB>" :
+                \ coc#refresh()
+
+            let g:coc_snippet_next = '<tab>'
+        " }}}
+
         " remap keys for gotos
         nmap <silent> gd <Plug>(coc-definition)
         nmap <silent> gy <Plug>(coc-type-defintion)
@@ -500,7 +557,7 @@ call plug#begin('~/.config/nvim/plugged')
         nmap <silent> gh <Plug>(coc-doHover)
 
         " diagnostics navigation
-        nmap <silent> <leader>c <plug>(coc-list-diagnostics)
+        nmap <silent><leader>c :<C-u>CocList diagnostics<cr>
         nmap <silent> [c <plug>(coc-diagnostic-prev)
         nmap <silent> ]c <plug>(coc-diagnostic-next)
 
@@ -539,8 +596,7 @@ call plug#begin('~/.config/nvim/plugged')
 
 " Language-Specific Configuration {{{
     " cpp {{{
-        Plug 'bfrg/vim-cpp-modern'
-        let g:cpp_simple_highlight = 1
+        Plug 'jackguo380/vim-lsp-cxx-highlight'
     " }}}
 
     " markdown {{{
@@ -564,6 +620,10 @@ call plug#begin('~/.config/nvim/plugged')
     Plug 'itchyny/calendar.vim'
     let g:calendar_google_calendar = 1
     let g:calendar_google_task = 1
+" }}}
+
+" Vimwiki {{{
+    Plug 'vimwiki/vimwiki'
 " }}}
 
 call plug#end()
