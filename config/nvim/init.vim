@@ -8,6 +8,14 @@ call plug#begin('~/.config/nvim/plugged')
     let g:vim_bibtex_name = 'joshua isaacson'
 " }}}
 
+" Test neocmake {{{
+    Plug '~/Documents/Tools/neocmake', { 'do': ':UpdateRemotePlugins' }
+" }}}
+
+" Test What Have I Done {{{
+    Plug '~/Documents/Tools/lua-plugin'
+" }}}
+
 " General {{{
     " Abbreviations
     abbr cosnt const
@@ -320,6 +328,9 @@ call plug#begin('~/.config/nvim/plugged')
     " add end, endif, etc. automatically
     Plug 'tpope/vim-endwise'
 
+    " add floating terminal
+    Plug 'voldikss/vim-floaterm'
+
 
     let g:tmux_navigator_save_on_switch = 1
     let g:tmux_navigator_disable_when_zoomed = 1
@@ -475,9 +486,9 @@ call plug#begin('~/.config/nvim/plugged')
     " UltiSnips {{{
         Plug 'SirVer/ultisnips' " Snippets plugin
         Plug 'honza/vim-snippets'
-        " let g:UltiSnipsExpandTrigger="<C-l>"
-        " let g:UltiSnipsJumpForwardTrigger="<C-j>"
-        " let g:UltiSnipsJumpBackwardTrigger="<C-k>"
+        let g:UltiSnipsExpandTrigger="<C-l>"
+        let g:UltiSnipsJumpForwardTrigger="<C-j>"
+        let g:UltiSnipsJumpBackwardTrigger="<C-k>"
         let g:ultisnips_python_style="google"
     " }}}
 
@@ -493,9 +504,13 @@ call plug#begin('~/.config/nvim/plugged')
         \ 'coc-python',
         \ 'coc-texlab',
         \ 'coc-snippets',
-        \ 'coc-explorer'
+        \ 'coc-explorer',
+        \ 'coc-pairs',
+        \ 'coc-lsp-wl',
+        \ 'coc-todolist'
         \]
 
+        " Highlight the symbol and its references when holding the cursor
         autocmd CursorHold * silent call CocActionAsync('highlight')
 
         " coc-git
@@ -527,6 +542,7 @@ call plug#begin('~/.config/nvim/plugged')
         \   }
         \ }
 
+        " coc-explorer
         nmap <silent> <leader>k :CocCommand explorer<CR>
         nmap <silent> <leader>kf :CocCommand explorer --preset floating<CR>
 
@@ -538,15 +554,6 @@ call plug#begin('~/.config/nvim/plugged')
 
             " Use <C-j> for both expand and jump (make expand higher priority.)
             imap <C-j> <Plug>(coc-snippets-expand-jump)
-
-            " Make <tab> used for trigger completion, completion confirm, snippet expand and jump like VSCode
-            inoremap <silent><expr> <TAB>
-                \ pumvisible() ? coc#_select_confirm() :
-                \ coc#expandableOrJumpable() ? "\<C-r>=coc#rpc#request('doKeymap', ['snippets-expand-jump'], ''])\<CR>" :
-                \ <SID>check_back_space() ? "\<TAB>" :
-                \ coc#refresh()
-
-            let g:coc_snippet_next = '<tab>'
         " }}}
 
         " remap keys for gotos
@@ -554,10 +561,9 @@ call plug#begin('~/.config/nvim/plugged')
         nmap <silent> gy <Plug>(coc-type-defintion)
         nmap <silent> gi <Plug>(coc-implementation)
         nmap <silent> gr <Plug>(coc-references)
-        nmap <silent> gh <Plug>(coc-doHover)
+        nnoremap <silent> gh :CocCommand clangd.switchSourceHeader<cr>
 
         " diagnostics navigation
-        nmap <silent><leader>c :<C-u>CocList diagnostics<cr>
         nmap <silent> [c <plug>(coc-diagnostic-prev)
         nmap <silent> ]c <plug>(coc-diagnostic-next)
 
@@ -567,6 +573,9 @@ call plug#begin('~/.config/nvim/plugged')
         " Remap for format selected region
         xmap <leader>f <plug>(coc-format-selected)
         nmap <leader>f <plug>(coc-format-selected)
+
+        " Apply AutoFix to problem on the current line
+        nmap <leader>qf <Plug>(coc-fix-current)
 
         " Use K to show documentation in preview window
         nnoremap <silent> K :call <SID>show_documentation()<cr>
@@ -579,6 +588,28 @@ call plug#begin('~/.config/nvim/plugged')
             endif
         endfunction
 
+        " Add `:Format` command to format current buffer
+        command! -nargs=0 Format :call CocAction('format')
+
+        " Add `:Fold` command to fold current buffer
+        command! -nargs=0 Fold :call CocAction('fold', <f-args>)
+
+        " Add `:OR` command to organize imports of the current buffer
+        command! -nargs=0 OR :call CocAction('runCommand', 'editor.action.organizeImport')
+
+        " Mappings using CocList: {{{
+            " Show all diagnostics
+            nnoremap <silent><space>d :<C-u>CocList diagnostics<cr>
+            " Manage extensions
+            nnoremap <silent><space>e :<C-u>CocList extensions<cr>
+            " Show commands
+            nnoremap <silent><space>c :<C-u>CocList commands<cr>
+            " Find symbol of current document
+            nnoremap <silent><space>o :<C-u>CocList outline<cr>
+            " Search workspace symbols
+            nnoremap <silent><space>s :<C-u>CocList -I symbols<cr>
+        " }}}
+
         " tab completion
         inoremap <silent><expr> <TAB>
             \ pumvisible() ? "\<C-n>" :
@@ -590,6 +621,10 @@ call plug#begin('~/.config/nvim/plugged')
             let col = col('.') - 1
             return !col || getline('.')[col - 1] =~# '\s'
         endfunction
+
+        " coc-todolist
+        nnoremap <silent><space>td :CocCommand todolist.create<cr>
+        nnoremap <silent><space>tl :<C-u>CocList todolist<cr>
 
     " }}}
 " }}}
@@ -604,6 +639,10 @@ call plug#begin('~/.config/nvim/plugged')
     " }}}
 
     " python {{{
+    " }}}
+
+    " mathematica {{{
+        Plug 'voldikss/vim-mma'
     " }}}
 " }}}
 

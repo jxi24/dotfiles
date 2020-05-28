@@ -1,15 +1,17 @@
 {
+    // Other
     "suggest.enablePreview": true,
     "codeLens.enable": true,
     "suggest.maxPreviewWidth": 100,
+    "suggest.labelMaxLength": 30,
     "diagnostic.checkCurrentLine": true,
     "diagnostic.maxWindowHeight": 20,
     "diagnostic.errorSign": "✖",
     "diagnostic.warningSign": "⚠",
     "diagnostic.infoSign": "●",
     "diagnostic.hintSign": "○",
-    "git.addGBlameToBufferVar": true,
 
+    // Explorer
     "explorer.icon.enableNerdfont": true,
     "explorer.sources": [
         {"name": "buffer", "expand": true},
@@ -29,11 +31,26 @@
         "<cr>": ["expandable?", "expandOrCollapse", "open"]
     },
 
+    // Python
     "python.pythonPath": "/home/isaacson/python",
     "python.linting.pep8Enabled": true,
     "python.linting.pep8Path": "pycodestyle",
     "python.condaPath": "/home/isaacson/Programs/anaconda3/bin/conda",
     "python.venvPath": " ~/Programs/anaconda3/envs/",
+    "python.jediEnabled": false,
 
-    "clangd.semanticHighlighting": true
+    // C++
+    "clangd.semanticHighlighting": true,
+
+    // Fortran
+    "languageserver": {
+        "fortran": {
+            "command": "fortls",
+            "filetypes": ["fortran"],
+            "rootPatterns": [".fortls", ".git/"]
+        }
+    },
+
+    // ToDo
+    "todolist.monitor": true
 }
