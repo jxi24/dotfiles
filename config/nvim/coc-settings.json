@@ -27,20 +27,21 @@
     "explorer.file.column.git.icon.ignored": "☒",
     "explorer.openAction.for.directory": "expandOrCollapse",
     "explorer.previewAction.onHover": false,
-    "explorer.keyMappings": {
-        "<cr>": ["expandable?", "expandOrCollapse", "open"]
+    "explorer.keyMappings.global": {
+        "<cr>": ["expandable?", ["expanded?", "collapse", "expand"], "open"]
     },
 
     // Python
-    "python.pythonPath": "/home/isaacson/python",
+    "python.pythonPath": "/home/isaacson/anaconda3/bin/python",
     "python.linting.pep8Enabled": true,
     "python.linting.pep8Path": "pycodestyle",
-    "python.condaPath": "/home/isaacson/Programs/anaconda3/bin/conda",
-    "python.venvPath": " ~/Programs/anaconda3/envs/",
+    "python.condaPath": "/home/isaacson/anaconda3/bin/conda",
+    "python.venvPath": " ~/anaconda3/envs/",
     "python.jediEnabled": false,
 
     // C++
     "clangd.semanticHighlighting": true,
+    "clangd.arguments": ["-cross-file-rename"],
 
     // Fortran
     "languageserver": {

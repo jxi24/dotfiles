@@ -16,15 +16,17 @@ autocmd FileType which_key set laststatus=0 noshowmode noruler
     \| autocmd BufLeave <buffer> set laststatus=2 noshowmode ruler
 
 " Single mappings
-let g:which_key_map['m'] = [ ':%!markdown --html4tags', 'Markdown2HTML']
-let g:which_key_map[','] = [ 'w',                       'Write']
-let g:which_key_map['z'] = [ '<Plug>Zoom',              'Zoom']
-let g:which_key_map['c'] = [':wincmd q',                'Close Window']
-let g:which_key_map['i'] = [':set cursorline!',         'cursor line']
-let g:which_key_map['\'] = [':vsplit',                  'vertical split']
-let g:which_key_map['-'] = [':split',                   'horizontal split']
-let g:which_key_map['s'] = [':Qtartify',                'start screen']
-let g:which_key_map['k'] = [':CocCommand explorer',     'explorer']
+let g:which_key_map['.'] = ['<c-^>',                        'last-buffer']
+let g:which_key_map['m'] = ['<Plug>MarkdownPreviewToggle',  'Toggle Markdown Preview']
+let g:which_key_map[','] = [':w',                           'Write']
+let g:which_key_map['z'] = [':MaximizerToggle!',            'Zoom']
+let g:which_key_map['c'] = [':wincmd q',                    'Close Window']
+let g:which_key_map['i'] = [':set cursorline!',             'cursor line']
+let g:which_key_map['\'] = [':vsplit',                      'vertical split']
+let g:which_key_map['-'] = [':split',                       'horizontal split']
+let g:which_key_map['s'] = [':Startify',                    'start screen']
+let g:which_key_map['k'] = [':CocCommand explorer',         'explorer']
+let g:which_key_map['h'] = [':CocCommand clangd.switchSourceHeader', 'Switch to Header/Source']
 
 " Group mappings
 
@@ -154,6 +156,36 @@ let g:which_key_map.t = {
             \ 'r' : [':FloatermNew vifm',                       'vifm'],
             \ 't' : [':FloatermToggle',                         'toggle'],
             \ 'h' : [':FloatermNew htop',                       'htop'],
+            \ }
+
+" d is for debug
+let g:which_key_map.d = {
+            \ 'name' : '+debug',
+            \ 'r' : [':call vimspector#Launch()', 'launch'],
+            \ 'R' : [':call vimspector#Reset()', 'reset'],
+            \ 'c' : [':call vimspector#Continue()', 'continue'],
+            \ 'l' : ['<Plug>VimspectorStepInto', 'step into'],
+            \ 'j' : ['<Plug>VimspectorStepOver', 'step over'],
+            \ 'k' : ['<Plug>VimspectorStepOut', 'step out'],
+            \ 'q' : ['<Plug>VimspectorRestart', 'restart'],
+            \ 'h' : ['<Plug>VimspectorRunToCursor', 'run to cursor'],
+            \ 'b' : ['<Plug>VimspectorToggleBreakpoint', 'toggle breakpoint'],
+            \ 'B' : ['<Plug>VimspectorToggleConditionalBreakpoint', 'toggle conditional breakpoint'],
+            \ 'C' : [':call GotoWindow(g:vimspector_session_windows.code)', 'code window'],
+            \ 'T' : [':call GotoWindow(g:vimspector_session_windows.tagpage)', 'tag window'],
+            \ 'V' : [':call GotoWindow(g:vimspector_session_windows.variables)', 'variables window'],
+            \ 'W' : [':call GotoWindow(g:vimspector_session_windows.watches)', 'watches window'],
+            \ 'S' : [':call GotoWindow(g:vimspector_session_windows.stack_trace)', 'stack trace'],
+            \ 'O' : [':call GotoWindow(g:vimspector_session_windows.output)', 'output window'],
+            \ }
+
+" f is for find
+let g:which_key_map.f = {
+            \ 'name' : '+find',
+            \ 'f' : [':Telescope find_files', 'files'],
+            \ 'g' : [':Telescope live_grep',  'grep'],
+            \ 'b' : [':Telescope buffers',    'buffers'],
+            \ 'h' : [':Telescope help_tags',  'tags'],
             \ }
 
 call which_key#register(',', 'g:which_key_map')

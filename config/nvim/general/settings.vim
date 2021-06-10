@@ -1,5 +1,5 @@
 " Ensure the correct python is used
-let g:python3_host_prog = '~/Programs/anaconda3/bin/python'
+let g:python3_host_prog = '~/anaconda3/bin/python'
 
 " Abbreviations
 abbr const const
@@ -114,3 +114,9 @@ set pastetoggle=<leader>v
 
 " Increment numbers and letters
 set nrformats+=alpha
+
+" Switch windows
+fun GotoWindow(id)
+    call win_gotoid(a:id)
+    MaximizerToggle
+endfun

@@ -14,17 +14,16 @@ let g:startify_lists = [
 \ ]
 
 let g:startify_commands = [
-\   { 'ui': [ 'Install Plugins', ':PlugInstall' ] },
-\   { 'up': [ 'Update Plugins', ':PlugUpdate' ] },
-\   { 'ug': [ 'Upgrade Plugin Manager', ':PlugUpgrade' ] },
-\   { 'uc': [ 'Upgrade CoC Plugins', ':CocUpdate' ] },
+\   { 's': [ 'Sync Plugins', ':PackerSync' ] },
+\   { 'l': [ 'List Plugins', ':lua require("telescope").extensions.packer.plugins()' ] },
 \ ]
 
 let g:startify_bookmarks = [
     \ { 'c': '~/.config/nvim/init.vim' },
     \ { 'g': '~/.gitconfig' },
     \ { 'b': '~/.bashrc' },
-    \ { 'o': '~/org/main.org' }
+    \ { 'o': '~/org/main.org' },
+    \ { 'w': '~/Dropbox/wiki/index.md' }
 \ ]
 
 autocmd User Startified setlocal cursorline
