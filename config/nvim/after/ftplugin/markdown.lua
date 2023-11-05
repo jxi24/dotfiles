@@ -1,0 +1,4 @@
+-- local wk = require('which-key')
+-- wk.register({
+--     o = { ":!xdg-open ", "Open link" },
+-- }, { prefix = "<leader>" }

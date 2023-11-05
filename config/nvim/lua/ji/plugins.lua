@@ -1,162 +1,140 @@
--- Only required if you have packer in your `opt` pack
-local packer_exists = pcall(vim.cmd, [[packadd packer.nvim]])
+-- This file can be loaded by calling `lua require('plugins')` from your init.vim
 
-if not packer_exists then
-    if vim.fn.input("Download Packer? (y for yes)") ~= "y" then
-        return
-    end
+-- Only required if you have packer configured as `opt`
+vim.cmd [[packadd packer.nvim]]
 
-    local directory = string.format(
-        '%s/site/pack/packer/opt/',
-        vim.fn.stdpath('data')
-    )
+return require('packer').startup(function(use)
+  -- Packer can manage itself
+  use 'wbthomason/packer.nvim'
 
-    vim.fn.mkdir(directory, 'p')
+  use {
+	  'nvim-telescope/telescope.nvim', tag = '0.1.0',
+	  -- or                            , branch = '0.1.x',
+	  requires = { {'nvim-lua/plenary.nvim'} }
+  }
+  use { 'nvim-telescope/telescope-fzf-native.nvim', run = 'make', cond = vim.fn.executable 'make' == 1 }
 
-    local out = vim.fn.system(string.format(
-        'git clone %s %s',
-        'https://github.com/wbthomason/packer.nvim',
-        directory .. '/packer.nvim'
-    ))
+  -- use "olimorris/onedarkpro.nvim"
+  use 'navarasu/onedark.nvim'
+  use {
+      'nvim-lualine/lualine.nvim',
+      requires = { 'nvim-tree/nvim-web-devicons' }
+  }
+  use 'numToStr/Comment.nvim'
+  use('nvim-treesitter/nvim-treesitter', { run = ':TSUpdate' })
+  use 'theprimeagen/harpoon'
+  use 'mbbill/undotree'
+  use { "rcarriga/nvim-dap-ui", requires = { "mfussenegger/nvim-dap" } }
 
-    print(out)
-    print("Downloading packer.nvim...")
+  use {
+	  'VonHeikemen/lsp-zero.nvim',
+	  requires = {
+		  -- LSP Support
+		  {'neovim/nvim-lspconfig'},
+		  {'williamboman/mason.nvim'},
+		  {'williamboman/mason-lspconfig.nvim'},
 
-    return
-end
+		  -- Autocompletion
+		  {'hrsh7th/nvim-cmp'},
+		  {'hrsh7th/cmp-buffer'},
+		  {'hrsh7th/cmp-path'},
+		  {'saadparwaiz1/cmp_luasnip'},
+		  {'hrsh7th/cmp-nvim-lsp'},
+		  {'hrsh7th/cmp-nvim-lua'},
 
-return require('packer').startup(function()
-    -- Packer can manage itself as an optional plugin
-    use {'wbthomason/packer.nvim', opt = true}
+		  -- Snippets
+		  {'L3MON4D3/LuaSnip'},
+		  {'rafamadriz/friendly-snippets'},
+	  }
+  }
 
-    -- Load colorschemes
-    use 'tjdevries/colorbuddy.vim'
-    use 'tjdevries/gruvbuddy.nvim'
-    use 'Th3Whit3Wolf/spacebuddy'
-    use 'Th3Whit3Wolf/onebuddy'
-    use 'norcalli/nvim-base16.lua'
-    use 'joshdick/onedark.vim'
-    use 'tyrannicaltoucan/vim-deep-space'
-    use { 'dracula/vim', as='dracula' }
-    use 'sainnhe/edge'
-    use 'sainnhe/sonokai'
-    use 'bluz71/vim-nightfly-guicolors'
-    use 'mhartington/oceanic-next'
-    use 'glepnir/zephyr-nvim'
+  -- DAP
+  use {
+      "williamboman/mason.nvim",
+      "mfussenegger/nvim-dap",
+      "jayp0521/mason-nvim-dap.nvim",
+  }
 
-    -- telescope
-    use 'nvim-lua/popup.nvim'
-    use 'nvim-lua/plenary.nvim'
-    use 'nvim-telescope/telescope.nvim'
-    use 'nvim-telescope/telescope-fzy-native.nvim'
-    use 'nvim-telescope/telescope-fzf-writer.nvim'
-    use 'nvim-telescope/telescope-github.nvim'
-    use 'nvim-telescope/telescope-packer.nvim'
-    use 'nvim-telescope/telescope-dap.nvim'
-    use 'nvim-telescope/telescope-symbols.nvim'
+  -- CMake
+  -- use 'Civitasv/cmake-tools.nvim'
 
-    -- tmux integration for vim
-    use 'benmills/vimux'
-    use 'christoomey/vim-tmux-navigator'
+  -- OrgMode
+  use { 'nvim-orgmode/orgmode' }
 
-    -- status line
-    use 'tjdevries/express_line.nvim'
-    -- use 'liuchengxu/eleline.vim'
+  -- Git
+  use {
+      'ldelossa/gh.nvim',
+      requires = { { 'ldelossa/litee.nvim' } }
+  }
+  use {
+      'lewis6991/gitsigns.nvim',
+      -- tag = 'release', -- To use the latest release (do not use this if you run Neovim nightly or dev builds!)
+  }
 
-    -- text manipulation
-    use 'godlygeek/tabular'
-    use 'tpope/vim-abolish'
-    use 'tpope/vim-commentary'
-    use 'tpope/vim-unimpaired'
-    use 'tpope/vim-surround'
-    use 'tpope/vim-repeat'
-    use 'tpope/vim-endwise'
+  -- tmux navigation
+  use({ 'mrjones2014/smart-splits.nvim' })
 
-    -- Startify
-    use 'mhinz/vim-startify'
+  -- Lua
+  use {
+      "folke/which-key.nvim",
+      config = function()
+          require("which-key").setup {}
+      end
+  }
 
-    -- context-aware pasting
-    use 'sickill/vim-pasta'
+  -- trouble
+  use {
+      "folke/trouble.nvim",
+      requires = "nvim-tree/nvim-web-devicons",
+  }
+  use {
+      "folke/todo-comments.nvim",
+      requires = "nvim-lua/plenary.nvim",
+  }
 
-    -- devicons
-    -- use 'ryanoasis/vim-devicons'
+  -- Neorg
+  use {
+      "nvim-neorg/neorg",
+      requires = { "nvim-neorg/neorg-telescope" },
+      run = ":Neorg sync-parsers",
+  }
 
-    use 'kyazdani42/nvim-web-devicons'
-    -- use 'kyazdani42/nvim-tree.lua'
+  use 'sidebar-nvim/sidebar.nvim'
+  use 'lervag/vimtex'
+  use({
+      "folke/noice.nvim",
+      requires = {
+        "MunifTanjim/nui.nvim",
+        "rcarriga/nvim-notify",
+      },
+  })
 
-    -- Better increment/decrement
-    use 'monaqa/dial.nvim'
-
-    -- Focus
-    use 'junegunn/goyo.vim'
-    use 'junegunn/limelight.vim'
-
-    -- Lua
-    use 'euclidianAce/BetterLua.vim'
-    use 'tjdevries/nlua.nvim'
-
-    -- C++
-    use 'rhysd/vim-clang-format'
-
-    -- latex
-    use {'lervag/vimtex', config = [[require('config.vimtex')]]}
-
-    -- neovim lsp
-    use 'neovim/nvim-lspconfig'
-    use 'nvim-lua/lsp-status.nvim'
-    use 'nvim-lua/completion-nvim'
-    use {'nvim-treesitter/completion-treesitter',
-         run = function() vim.cmd [[TSUpdate]] end
-    }
-    use 'glepnir/lspsaga.nvim'
-
-    -- snippets
-    use 'norcalli/snippets.nvim'
-    use 'norcalli/nvim-terminal.lua'
-
-    -- debugger
-    use 'mfussenegger/nvim-dap'
-    use 'mfussenegger/nvim-dap-python'
-    use {
-        'theHamsta/nvim-dap-virtual-text',
-        run = function()
-            vim.g.dap_virtual_text = true
-        end
-    }
-
-    -- Cool tags based viewer
-    --   :Vista  <-- Opens up a really cool sidebar with info about file.
-    use 'liuchengxu/vista.vim'
-
-    -- Treesitter
-    use 'nvim-treesitter/nvim-treesitter'
-    use 'nvim-treesitter/nvim-treesitter-refactor'
-
-    -- GIT
-    use 'lambdalisue/gina.vim'
-    use 'kdheepak/lazygit.nvim'
-    use 'rhysd/committia.vim'
-    use 'rhysd/git-messenger.vim'
-    use 'mhinz/vim-signify'
-    use 'pwntester/octo.nvim'
-
-    -- FZF
-    use {'junegunn/fzf', run = './install --all' }
-    use {'junegunn/fzf.vim'}
-
-    -- Browser
-    use 'tyru/open-browser.vim'
-
-    -- Productivity
-    use 'vimwiki/vimwiki'
-    use 'tools-life/taskwiki'
-
-    -- Which-key
-    use { 'folke/which-key.nvim',
-          config = function()
-              require('which-key').setup {
-              }
-          end
+  use {
+      "ThePrimeagen/refactoring.nvim",
+      requires = {
+          {"nvim-lua/plenary.nvim"},
+          {"nvim-treesitter/nvim-treesitter"}
       }
-end)
+  }
 
+  use({
+      "utilyre/barbecue.nvim",
+      requires = {
+          "neovim/nvim-lspconfig",
+          "smiteshp/nvim-navic",
+          "nvim-tree/nvim-web-devicons", -- optional dependency
+      },
+  })
+
+  use {
+      "danymat/neogen",
+      requires = "nvim-treesitter/nvim-treesitter",
+      -- Uncomment next line if you want to follow only stable versions
+      -- tag = "*"
+  }
+
+  use {"akinsho/toggleterm.nvim", tag = '*'}
+
+  use "fladson/vim-kitty"
+  use "knubie/vim-kitty-navigator"
+end)

@@ -1,10 +1,5 @@
-function! SetServerName()
-    let nvim_server_file = "/tmp/curnvimserver.txt"
-    let cmd = printf("echo %s > %s", v:servername, nvim_server_file)
-    call system(cmd)
-endfunction
+" Okular reverse search not working
+" let g:vimtex_view_general_viewer = 'okular'
+" let g:vimtex_view_general_options = '--unique file:@pdf\#src:@line@tex'
 
-augroup vimtex_common
-    autocmd!
-    autocmd FileType tex call SetServerName()
-augroup END
+let g:vimtex_view_method = 'zathura'

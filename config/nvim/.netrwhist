@@ -1,0 +1,12 @@
+let g:netrw_dirhistmax  =10
+let g:netrw_dirhistcnt =3
+let g:netrw_dirhist_3='/home/isaacson/.dotfiles/config/nvim/vim-plug'
+let g:netrw_dirhist_2='/home/isaacson/.dotfiles/config/nvim'
+let g:netrw_dirhist_1='/home/isaacson/.dotfiles/config/nvim/general'
+let g:netrw_dirhist_0='/home/isaacson/.dotfiles/config/nvim'
+let g:netrw_dirhist_9='/home/isaacson/Documents/Projects/NeutrinoGenerator/FNALNeuGen/src/nuchic/fortran/OneBody'
+let g:netrw_dirhist_8='/home/isaacson/Documents/Tools/which-key/lua/which-key'
+let g:netrw_dirhist_7='/home/isaacson/Documents/Projects/ResBos2/resbos2.0.1/resbos2/include/gzstream'
+let g:netrw_dirhist_6='/home/isaacson/Documents/Projects/NeutrinoGenerator/FNALNeuGen/_build/src/nuchic/CMakeFiles'
+let g:netrw_dirhist_5='/home/isaacson/Documents/Projects/NeutrinoGenerator/FNALNeuGen/src/Plugins/NucleonInteractions'
+let g:netrw_dirhist_4='/home/isaacson/Dropbox/ResBos2/yao/CT18NNLO_MT_w432_pds/i2Tn3.00_NonPertFit/Scale901'
