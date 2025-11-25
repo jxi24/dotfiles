@@ -1,0 +1,446 @@
+--- Startup times for process: Primary/TUI ---
+
+times in msec
+ clock   self+sourced   self:  sourced script
+ clock   elapsed:              other lines
+
+000.014  000.014: --- NVIM STARTING ---
+000.838  000.824: event init
+001.179  000.341: early init
+001.375  000.196: locale set
+001.578  000.203: init first window
+002.979  001.401: inits 1
+003.036  000.056: window checked
+003.047  000.011: parsing arguments
+005.515  000.140  000.140: require('vim.shared')
+005.860  000.181  000.181: require('vim.inspect')
+006.109  000.184  000.184: require('vim._options')
+006.117  000.584  000.219: require('vim._editor')
+006.121  000.962  000.237: require('vim._init_packages')
+006.139  002.131: init lua interpreter
+008.252  002.113: --- NVIM STARTED ---
+
+--- Startup times for process: Embedded ---
+
+times in msec
+ clock   self+sourced   self:  sourced script
+ clock   elapsed:              other lines
+
+000.007  000.007: --- NVIM STARTING ---
+000.635  000.628: event init
+000.873  000.238: early init
+001.001  000.128: locale set
+001.140  000.139: init first window
+002.402  001.262: inits 1
+002.467  000.065: window checked
+002.476  000.009: parsing arguments
+004.396  000.182  000.182: require('vim.shared')
+004.766  000.221  000.221: require('vim.inspect')
+005.108  000.249  000.249: require('vim._options')
+005.116  000.707  000.237: require('vim._editor')
+005.120  001.005  000.116: require('vim._init_packages')
+005.127  001.645: init lua interpreter
+005.371  000.245: expanding arguments
+005.459  000.088: inits 2
+006.331  000.871: init highlight
+006.334  000.003: waiting for UI
+006.882  000.548: done waiting for UI
+006.911  000.029: clear screen
+007.147  000.025  000.025: require('vim.keymap')
+008.857  001.938  001.913: require('vim._defaults')
+008.868  000.020: init default mappings & autocommands
+011.318  000.171  000.171: sourcing /usr/share/nvim/runtime/ftplugin.vim
+011.556  000.108  000.108: sourcing /usr/share/nvim/runtime/indent.vim
+012.271  000.417  000.417: sourcing /usr/share/nvim/archlinux.lua
+012.300  000.590  000.173: sourcing /etc/xdg/nvim/sysinit.vim
+018.259  004.595  004.595: require('config.keymaps')
+019.935  001.252  001.252: require('lazy')
+020.018  000.038  000.038: require('ffi')
+020.130  000.049  000.049: require('vim.fs')
+020.399  000.255  000.255: require('vim.uri')
+020.427  000.401  000.098: require('vim.loader')
+021.935  001.466  001.466: require('lazy.stats')
+022.281  000.301  000.301: require('lazy.core.util')
+022.570  000.281  000.281: require('lazy.core.config')
+023.001  000.192  000.192: require('lazy.core.handler')
+023.689  000.160  000.160: require('lazy.pkg')
+023.701  000.382  000.223: require('lazy.core.meta')
+023.716  000.710  000.327: require('lazy.core.plugin')
+023.732  001.155  000.252: require('lazy.core.loader')
+026.431  000.713  000.713: require('lazy.core.fragments')
+027.570  000.181  000.181: require('plugins.colorscheme')
+027.881  000.274  000.274: require('plugins.dap')
+028.007  000.069  000.069: require('plugins.diagnostic')
+028.128  000.064  000.064: require('plugins.git')
+029.063  000.119  000.119: require('vim.lsp.log')
+030.300  001.231  001.231: require('vim.lsp.protocol')
+031.298  000.609  000.609: require('vim.lsp._snippet_grammar')
+031.422  000.116  000.116: require('vim.highlight')
+031.444  000.015  000.015: require('vim.F')
+031.475  001.165  000.424: require('vim.lsp.util')
+032.160  000.481  000.481: require('vim.lsp.sync')
+032.185  000.706  000.225: require('vim.lsp._changetracking')
+032.420  000.231  000.231: require('vim.lsp.rpc')
+032.528  004.295  000.843: require('vim.lsp')
+032.704  000.171  000.171: require('vim.lsp.buf')
+032.987  000.253  000.253: require('vim.diagnostic')
+032.993  004.829  000.110: require('plugins.lsp')
+033.118  000.065  000.065: require('plugins.telescope')
+033.235  000.054  000.054: require('plugins.treesitter')
+033.504  000.245  000.245: require('plugins.ui')
+034.516  000.082  000.082: require('lazy.core.handler.event')
+034.521  000.179  000.097: require('lazy.core.handler.ft')
+034.652  000.127  000.127: require('lazy.core.handler.cmd')
+034.780  000.122  000.122: require('lazy.core.handler.keys')
+037.720  000.272  000.272: sourcing /usr/share/nvim/runtime/filetype.lua
+042.219  002.910  002.910: require('vim.filetype')
+043.036  000.042  000.042: require('luasnip.util.types')
+043.041  000.115  000.072: require('luasnip.util.ext_opts')
+043.175  000.033  000.033: require('luasnip.util.lazy_table')
+043.216  000.038  000.038: require('luasnip.extras.filetype_functions')
+043.224  000.139  000.068: require('luasnip.default_config')
+043.227  000.184  000.045: require('luasnip.session')
+043.229  000.901  000.602: require('luasnip.config')
+043.376  000.070  000.070: require('luasnip.util.util')
+043.456  000.031  000.031: require('luasnip.nodes.key_indexer')
+043.461  000.082  000.051: require('luasnip.nodes.util')
+043.562  000.055  000.055: require('luasnip.session.snippet_collection.source')
+043.595  000.030  000.030: require('luasnip.util.table')
+043.628  000.032  000.032: require('luasnip.util.auto_table')
+043.634  000.172  000.054: require('luasnip.session.snippet_collection')
+043.784  000.050  000.050: require('luasnip.util.select')
+043.825  000.038  000.038: require('luasnip.util.time')
+044.112  000.441  000.353: require('luasnip.util._builtin_vars')
+044.209  000.574  000.132: require('luasnip.util.environ')
+044.264  000.052  000.052: require('luasnip.util.extend_decorator')
+044.412  000.080  000.080: require('luasnip.util.path')
+044.546  000.069  000.069: require('luasnip.util.log')
+044.552  000.138  000.069: require('luasnip.loaders.util')
+044.604  000.050  000.050: require('luasnip.loaders.data')
+044.749  000.142  000.142: require('luasnip.loaders.fs_watchers')
+044.754  000.487  000.078: require('luasnip.loaders')
+044.774  001.540  000.103: require('luasnip')
+044.797  005.697  000.346: sourcing /home/isaacson/.local/share/nvim/lazy/LuaSnip/plugin/luasnip.lua
+044.867  000.026  000.026: sourcing /home/isaacson/.local/share/nvim/lazy/LuaSnip/plugin/luasnip.vim
+045.459  000.370  000.370: require('cmp.utils.api')
+045.610  000.087  000.087: require('cmp.types.cmp')
+045.728  000.057  000.057: require('cmp.utils.misc')
+045.739  000.126  000.069: require('cmp.types.lsp')
+045.778  000.037  000.037: require('cmp.types.vim')
+045.780  000.317  000.067: require('cmp.types')
+045.822  000.041  000.041: require('cmp.utils.highlight')
+045.908  000.037  000.037: require('cmp.utils.debug')
+045.913  000.089  000.052: require('cmp.utils.autocmd')
+046.237  001.213  000.396: sourcing /home/isaacson/.local/share/nvim/lazy/nvim-cmp/plugin/cmp.lua
+046.652  000.133  000.133: require('cmp.utils.char')
+046.659  000.198  000.065: require('cmp.utils.str')
+047.028  000.039  000.039: require('cmp.utils.buffer')
+047.036  000.110  000.071: require('cmp.utils.keymap')
+047.039  000.378  000.268: require('cmp.utils.feedkeys')
+047.348  000.171  000.171: require('cmp.config.mapping')
+047.431  000.081  000.081: require('cmp.utils.cache')
+047.628  000.126  000.126: require('cmp.config.compare')
+047.630  000.195  000.069: require('cmp.config.default')
+047.654  000.560  000.113: require('cmp.config')
+047.664  000.624  000.064: require('cmp.utils.async')
+047.788  000.061  000.061: require('cmp.utils.pattern')
+047.794  000.128  000.067: require('cmp.context')
+048.231  000.228  000.228: require('cmp.utils.snippet')
+048.321  000.088  000.088: require('cmp.matcher')
+048.365  000.481  000.165: require('cmp.entry')
+048.403  000.608  000.127: require('cmp.source')
+048.671  000.128  000.128: require('cmp.utils.event')
+048.919  000.066  000.066: require('cmp.utils.options')
+048.925  000.155  000.089: require('cmp.utils.window')
+048.927  000.253  000.098: require('cmp.view.docs_view')
+049.100  000.172  000.172: require('cmp.view.custom_entries_view')
+049.271  000.168  000.168: require('cmp.view.wildmenu_entries_view')
+049.377  000.104  000.104: require('cmp.view.native_entries_view')
+049.486  000.106  000.106: require('cmp.view.ghost_text_view')
+049.497  001.091  000.160: require('cmp.view')
+049.811  003.450  000.423: require('cmp.core')
+050.110  000.101  000.101: require('cmp.config.sources')
+050.213  000.100  000.100: require('cmp.config.window')
+050.430  004.159  000.508: require('cmp')
+053.626  000.186  000.186: sourcing /home/isaacson/.local/share/nvim/lazy/nvim-lspconfig/plugin/lspconfig.lua
+053.777  000.049  000.049: require('cmp_nvim_lsp.source')
+053.781  000.120  000.071: require('cmp_nvim_lsp')
+054.801  000.060  000.060: require('fidget.spinner.patterns')
+054.823  000.115  000.055: require('fidget.spinner')
+054.861  000.035  000.035: require('fidget.options')
+054.867  000.237  000.087: require('fidget.progress.display')
+054.961  000.051  000.051: require('fidget.logger')
+055.469  000.505  000.505: require('vim.lsp.handlers')
+055.475  000.606  000.051: require('fidget.progress.lsp')
+055.904  000.123  000.123: require('fidget.poll')
+055.913  000.274  000.151: require('fidget.notification.model')
+056.058  000.092  000.092: require('fidget.notification.window')
+056.133  000.072  000.072: require('fidget.notification.view')
+056.201  000.643  000.204: require('fidget.notification')
+056.205  000.728  000.085: require('fidget.progress.handle')
+056.226  001.695  000.124: require('fidget.progress')
+056.386  000.157  000.157: require('fidget.commands')
+056.601  000.140  000.140: require('fidget.integration.nvim-tree')
+056.701  000.094  000.094: require('fidget.integration.xcodebuild-nvim')
+056.708  000.317  000.083: require('fidget.integration')
+056.795  002.765  000.595: require('fidget')
+058.467  000.040  000.040: require('mason-core.path')
+058.580  000.062  000.062: require('mason-core.functional')
+058.655  000.030  000.030: require('mason-core.functional.data')
+058.659  000.070  000.040: require('mason-core.functional.function')
+058.726  000.048  000.048: require('mason-core.functional.relation')
+058.782  000.047  000.047: require('mason-core.functional.logic')
+058.794  000.324  000.098: require('mason-core.platform')
+058.850  000.054  000.054: require('mason.settings')
+058.853  000.535  000.117: require('mason')
+058.962  000.043  000.043: require('mason-core.functional.list')
+058.999  000.034  000.034: require('mason-core.functional.string')
+059.016  000.151  000.074: require('mason.api.command')
+059.061  000.041  000.041: require('mason-registry.sources')
+059.224  000.056  000.056: require('mason-core.log')
+059.258  000.032  000.032: require('mason-lspconfig.settings')
+059.261  000.137  000.049: require('mason-lspconfig')
+059.370  000.029  000.029: require('mason-lspconfig.notify')
+059.374  000.070  000.041: require('mason-lspconfig.lspconfig_hook')
+059.482  000.106  000.106: require('lspconfig.util')
+059.623  000.043  000.043: require('mason-core.functional.table')
+059.668  000.183  000.140: require('mason-lspconfig.mappings.server')
+059.760  000.038  000.038: require('mason-core.EventEmitter')
+059.807  000.045  000.045: require('mason-core.optional')
+059.910  000.051  000.051: require('mason-core.async')
+059.946  000.034  000.034: require('mason-core.async.uv')
+059.953  000.144  000.059: require('mason-core.fs')
+059.969  000.300  000.072: require('mason-registry')
+060.010  000.039  000.039: require('mason-lspconfig.server_config_extensions')
+060.138  000.065  000.065: require('lspconfig.async')
+060.141  000.129  000.064: require('lspconfig.configs')
+060.198  000.055  000.055: require('lspconfig.server_configurations.omnisharp')
+060.281  000.044  000.044: require('mason-lspconfig.ensure_installed')
+060.391  000.051  000.051: require('mason-core.result')
+060.630  000.145  000.145: require('mason-core.process')
+060.756  000.124  000.124: require('mason-core.spawn')
+060.767  000.324  000.055: require('mason-core.managers.powershell')
+060.835  000.066  000.066: require('mason.version')
+060.841  000.447  000.057: require('mason-core.fetch')
+060.934  000.090  000.090: require('mason-core.providers')
+061.173  000.108  000.108: require('mason-core.purl')
+061.195  000.220  000.112: require('mason-core.package')
+061.507  000.112  000.112: require('mason-core.installer.registry.expr')
+061.521  000.248  000.137: require('mason-core.installer.registry.link')
+062.085  000.114  000.114: require('mason-core.receipt')
+062.110  000.248  000.133: require('mason-core.installer.context')
+062.181  000.069  000.069: require('mason-core.async.control')
+062.265  000.082  000.082: require('mason-core.installer.linker')
+062.292  000.559  000.160: require('mason-core.installer')
+062.319  000.733  000.174: require('mason-core.installer.managers.std')
+062.321  000.799  000.066: require('mason-core.installer.registry.schemas')
+062.388  000.066  000.066: require('mason-core.installer.registry.util')
+062.403  001.206  000.092: require('mason-core.installer.registry')
+062.412  001.475  000.050: require('mason-registry.sources.util')
+062.432  002.143  000.079: require('mason-registry.sources.github')
+067.911  000.067  000.067: require('mason-core.functional.number')
+067.937  000.183  000.115: require('mason-lspconfig.api.command')
+068.237  000.070  000.070: require('lspconfig')
+068.348  000.107  000.107: require('lspconfig.server_configurations.taplo')
+069.692  000.103  000.103: require('lspconfig.manager')
+069.784  000.080  000.080: require('lspconfig.server_configurations.rust_analyzer')
+070.544  000.062  000.062: require('lspconfig.server_configurations.neocmake')
+071.105  000.063  000.063: require('lspconfig.server_configurations.lemminx')
+072.135  000.156  000.156: require('lspconfig.server_configurations.dockerls')
+073.382  000.223  000.223: require('lspconfig.server_configurations.lua_ls')
+074.549  000.057  000.057: require('lspconfig.server_configurations.ruff')
+075.022  000.079  000.079: require('lspconfig.server_configurations.cmake')
+075.548  000.046  000.046: require('lspconfig.server_configurations.fortls')
+075.995  000.046  000.046: require('lspconfig.server_configurations.marksman')
+076.469  000.074  000.074: require('lspconfig.server_configurations.texlab')
+077.013  000.049  000.049: require('lspconfig.server_configurations.yamlls')
+077.431  000.052  000.052: require('lspconfig.server_configurations.clangd')
+078.575  000.030  000.030: sourcing /home/isaacson/.local/share/nvim/lazy/nvim-web-devicons/plugin/nvim-web-devicons.vim
+079.429  000.058  000.058: require('gitsigns.async')
+079.476  000.044  000.044: require('gitsigns.debug.log')
+079.567  000.089  000.089: require('gitsigns.config')
+079.571  000.749  000.558: require('gitsigns')
+079.711  000.064  000.064: require('gitsigns.highlight')
+080.124  000.044  000.044: require('gitsigns.debounce')
+080.643  000.036  000.036: require('diffview.lazy')
+080.816  000.038  000.038: require('diffview.ffi')
+080.860  000.041  000.041: require('diffview.oop')
+080.871  000.142  000.063: require('diffview.async')
+080.985  000.104  000.104: require('diffview.utils')
+081.027  000.034  000.034: require('diffview.mock')
+081.038  000.362  000.081: require('diffview.logger')
+081.095  000.048  000.048: require('diffview.control')
+081.165  000.062  000.062: require('diffview.events')
+081.172  000.836  000.329: require('diffview.bootstrap')
+081.189  000.894  000.058: sourcing /home/isaacson/.local/share/nvim/lazy/diffview.nvim/plugin/diffview.lua
+081.353  000.134  000.134: require('diffview.actions')
+081.559  000.151  000.151: require('diffview.hl')
+082.535  000.188  000.188: require('diffview.config')
+083.587  002.228  001.889: require('diffview')
+084.426  000.052  000.052: sourcing /usr/share/nvim/runtime/plugin/editorconfig.lua
+084.581  000.128  000.128: sourcing /usr/share/nvim/runtime/plugin/gzip.vim
+084.667  000.058  000.058: sourcing /usr/share/nvim/runtime/plugin/man.lua
+085.209  000.179  000.179: sourcing /usr/share/nvim/runtime/pack/dist/opt/matchit/plugin/matchit.vim
+085.224  000.530  000.350: sourcing /usr/share/nvim/runtime/plugin/matchit.vim
+085.354  000.104  000.104: sourcing /usr/share/nvim/runtime/plugin/matchparen.vim
+085.627  000.243  000.243: sourcing /usr/share/nvim/runtime/plugin/netrwPlugin.vim
+085.719  000.049  000.049: sourcing /usr/share/nvim/runtime/plugin/osc52.lua
+085.864  000.113  000.113: sourcing /usr/share/nvim/runtime/plugin/rplugin.vim
+085.984  000.047  000.047: sourcing /usr/share/nvim/runtime/plugin/shada.vim
+086.051  000.017  000.017: sourcing /usr/share/nvim/runtime/plugin/spellfile.vim
+086.167  000.085  000.085: sourcing /usr/share/nvim/runtime/plugin/tarPlugin.vim
+086.372  000.137  000.137: sourcing /usr/share/nvim/runtime/plugin/tohtml.lua
+086.489  000.030  000.030: sourcing /usr/share/nvim/runtime/plugin/tutor.vim
+086.763  000.210  000.210: sourcing /usr/share/nvim/runtime/plugin/zipPlugin.vim
+087.254  000.066  000.066: require('cmp_luasnip')
+087.291  000.183  000.118: sourcing /home/isaacson/.local/share/nvim/lazy/cmp_luasnip/after/plugin/cmp_luasnip.lua
+087.559  000.126  000.126: require('cmp_cmdline')
+087.578  000.210  000.085: sourcing /home/isaacson/.local/share/nvim/lazy/cmp-cmdline/after/plugin/cmp_cmdline.lua
+087.872  000.146  000.146: require('cmp_path')
+087.888  000.235  000.089: sourcing /home/isaacson/.local/share/nvim/lazy/cmp-path/after/plugin/cmp_path.lua
+088.197  000.038  000.038: require('cmp_buffer.timer')
+088.203  000.095  000.057: require('cmp_buffer.buffer')
+088.205  000.146  000.050: require('cmp_buffer.source')
+088.207  000.186  000.040: require('cmp_buffer')
+088.221  000.258  000.073: sourcing /home/isaacson/.local/share/nvim/lazy/cmp-buffer/after/plugin/cmp_buffer.lua
+088.402  000.100  000.100: sourcing /home/isaacson/.local/share/nvim/lazy/cmp-nvim-lsp/after/plugin/cmp_nvim_lsp.lua
+088.518  070.248  031.680: require('config.lazy')
+089.132  000.047  000.047: sourcing /home/isaacson/.local/share/nvim/lazy/smart-splits.nvim/plugin/init.lua
+089.589  000.042  000.042: require('smart-splits.types')
+089.668  000.036  000.036: require('smart-splits.lazy')
+089.839  000.243  000.207: require('smart-splits')
+089.845  000.647  000.362: require('smart-splits.commands')
+090.029  000.047  000.047: require('smart-splits.mux.utils')
+090.035  000.110  000.063: require('smart-splits.config')
+090.204  000.080  000.080: require('smart-splits.log.file')
+090.301  000.089  000.089: require('smart-splits.log.async')
+090.313  000.252  000.083: require('smart-splits.log')
+090.507  000.128  000.128: require('smart-splits.mux')
+090.618  000.105  000.105: require('smart-splits.mux.wezterm')
+090.708  000.042  000.042: sourcing /home/isaacson/.local/share/nvim/lazy/smart-splits.nvim/autoload/smart_splits.vim
+090.921  001.755  000.471: sourcing /home/isaacson/.local/share/nvim/lazy/smart-splits.nvim/plugin/smart-splits.lua
+091.077  002.556  000.754: require('smart-splits')
+092.184  000.166  000.166: require('catppuccin')
+092.284  000.056  000.056: require('catppuccin.lib.hashing')
+093.852  001.851  001.630: sourcing /home/isaacson/.local/share/nvim/lazy/catppuccin/colors/catppuccin-frappe.vim
+095.840  000.186  000.186: require('diffview.lib')
+095.851  083.403  003.966: sourcing /home/isaacson/.config/nvim/init.lua
+095.860  002.721: sourcing vimrc file(s)
+096.073  000.062  000.062: sourcing /usr/share/nvim/runtime/filetype.lua
+096.338  000.067  000.067: sourcing /usr/share/nvim/runtime/syntax/synload.vim
+096.453  000.286  000.220: sourcing /usr/share/nvim/runtime/syntax/syntax.vim
+096.471  000.264: inits 3
+100.100  003.629: reading ShaDa
+100.437  000.118  000.118: require('luasnip.util.directed_graph')
+100.498  000.058  000.058: require('luasnip.session.enqueueable_operations')
+100.506  000.322  000.147: require('luasnip.loaders.from_lua')
+101.158  000.078  000.078: require('luasnip.util.events')
+101.175  000.289  000.211: require('luasnip.nodes.node')
+101.335  000.159  000.159: require('luasnip.nodes.insertNode')
+101.534  000.183  000.183: require('luasnip.nodes.textNode')
+101.768  000.229  000.229: require('luasnip.util.mark')
+101.858  000.086  000.086: require('luasnip.util.pattern_tokenizer')
+101.924  000.064  000.064: require('luasnip.util.dict')
+102.743  000.721  000.721: require('luasnip.util.jsregexp')
+102.752  000.824  000.103: require('luasnip.nodes.util.trig_engines')
+102.827  002.094  000.260: require('luasnip.nodes.snippet')
+102.832  002.149  000.055: require('luasnip.nodes.duplicate')
+102.835  002.232  000.084: require('luasnip.loaders.snippet_cache')
+102.849  002.339  000.107: require('luasnip.loaders.from_snipmate')
+104.048  000.155  000.155: require('luasnip.util.parser.neovim_ast')
+104.443  000.386  000.386: require('luasnip.util.str')
+104.967  000.510  000.510: require('luasnip.util.jsregexp')
+105.000  001.292  000.241: require('luasnip.util.parser.ast_utils')
+105.340  000.312  000.312: require('luasnip.nodes.functionNode')
+105.819  000.476  000.476: require('luasnip.nodes.choiceNode')
+106.342  000.521  000.521: require('luasnip.nodes.dynamicNode')
+106.518  000.173  000.173: require('luasnip.util.functions')
+106.556  003.033  000.260: require('luasnip.util.parser.ast_parser')
+107.324  000.765  000.765: require('luasnip.util.parser.neovim_parser')
+107.333  004.045  000.247: require('luasnip.util.parser')
+107.483  000.148  000.148: require('luasnip.nodes.snippetProxy')
+107.993  000.498  000.498: require('luasnip.util.jsonc')
+108.011  005.159  000.469: require('luasnip.loaders.from_vscode')
+108.118  000.197: opening buffers
+108.148  000.031: BufEnter autocommands
+108.151  000.003: editing files in windows
+108.779  000.092  000.092: sourcing /home/isaacson/.local/share/nvim/lazy/plenary.nvim/plugin/plenary.vim
+110.142  000.185  000.185: sourcing /home/isaacson/.local/share/nvim/lazy/telescope.nvim/plugin/telescope.lua
+110.606  000.065  000.065: require('telescope._extensions')
+110.611  000.443  000.378: require('telescope')
+110.678  000.065  000.065: require('telescope.themes')
+111.029  000.063  000.063: require('plenary.bit')
+111.107  000.075  000.075: require('plenary.functional')
+111.159  000.272  000.134: require('plenary.path')
+111.180  000.339  000.066: require('plenary.strings')
+111.307  000.124  000.124: require('telescope.deprecated')
+111.555  000.119  000.119: require('plenary.log')
+111.574  000.187  000.068: require('telescope.log')
+111.842  000.038  000.038: require('plenary.compat')
+111.851  000.144  000.106: require('plenary.job')
+111.905  000.052  000.052: require('telescope.state')
+111.923  000.347  000.150: require('telescope.utils')
+111.930  000.620  000.087: require('telescope.sorters')
+113.534  002.805  001.722: require('telescope.config')
+114.565  000.141  000.141: require('fzf_lib')
+114.571  000.256  000.116: require('telescope._extensions.fzf')
+114.669  000.066  000.066: require('telescope._extensions.ui-select')
+115.174  000.205  000.205: require('plenary.tbl')
+115.178  000.241  000.036: require('plenary.vararg.rotate')
+115.180  000.275  000.034: require('plenary.vararg')
+115.214  000.033  000.033: require('plenary.errors')
+115.218  000.350  000.042: require('plenary.async.async')
+115.353  000.033  000.033: require('plenary.async.structs')
+115.359  000.076  000.043: require('plenary.async.control')
+115.364  000.115  000.039: require('plenary.async.util')
+115.366  000.146  000.032: require('plenary.async.tests')
+115.367  000.540  000.044: require('plenary.async')
+115.463  000.042  000.042: require('plenary.window.border')
+115.500  000.035  000.035: require('plenary.window')
+115.553  000.052  000.052: require('plenary.popup.utils')
+115.557  000.188  000.059: require('plenary.popup')
+115.962  000.115  000.115: require('telescope.pickers.scroller')
+116.069  000.104  000.104: require('telescope.actions.state')
+116.184  000.093  000.093: require('telescope.actions.utils')
+116.318  000.053  000.053: require('telescope.actions.mt')
+116.332  000.129  000.076: require('telescope.actions.set')
+116.458  000.055  000.055: require('telescope.config.resolve')
+116.460  000.127  000.072: require('telescope.pickers.entry_display')
+116.510  000.048  000.048: require('telescope.from_entry')
+116.700  001.142  000.526: require('telescope.actions')
+116.765  000.063  000.063: require('telescope.debounce')
+116.856  000.088  000.088: require('telescope.mappings')
+116.916  000.058  000.058: require('telescope.pickers.highlights')
+116.968  000.050  000.050: require('telescope.pickers.window')
+117.018  000.048  000.048: require('telescope.pickers.layout')
+117.120  000.048  000.048: require('telescope.algos.linked_list')
+117.123  000.103  000.055: require('telescope.entry_manager')
+117.193  000.068  000.068: require('telescope.pickers.multi')
+117.209  002.536  000.188: require('telescope.pickers')
+117.394  000.127  000.127: require('telescope.make_entry')
+117.457  000.060  000.060: require('telescope.finders.async_static_finder')
+117.594  000.030  000.030: require('plenary.class')
+117.605  000.099  000.069: require('telescope._')
+117.607  000.148  000.049: require('telescope.finders.async_oneshot_finder')
+117.655  000.047  000.047: require('telescope.finders.async_job_finder')
+117.660  000.449  000.067: require('telescope.finders')
+117.704  000.036  000.036: require('vim.ui')
+117.915  000.049  000.049: require('telescope.previewers.previewer')
+118.099  000.099  000.099: require('telescope.previewers.utils')
+118.232  000.314  000.215: require('telescope.previewers.term_previewer')
+119.617  001.140  001.140: require('plenary.scandir')
+119.763  001.528  000.387: require('telescope.previewers.buffer_previewer')
+119.788  001.978  000.087: require('telescope.previewers')
+119.876  000.082  000.082: require('telescope._extensions.gh_previewers')
+120.807  000.930  000.930: require('telescope._extensions.gh_actions')
+120.861  000.050  000.050: require('telescope._extensions.gh_make_entry')
+120.866  003.121  000.082: require('telescope._extensions.gh_builtin')
+120.869  003.157  000.035: require('telescope._extensions.gh')
+120.966  000.094  000.094: require('telescope.builtin')
+121.195  002.858: VimEnter autocommands
+121.459  000.264: UIEnter autocommands
+9402.006  9280.420  9280.420: sourcing /usr/share/nvim/runtime/autoload/provider/clipboard.vim
+9402.032  000.152: before starting main loop
+9402.320  000.288: first screen update
+9402.322  000.002: --- NVIM STARTED ---
+
