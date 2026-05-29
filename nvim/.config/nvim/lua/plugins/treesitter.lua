@@ -1,26 +1,16 @@
 return {
-    {
-        "nvim-treesitter/nvim-treesitter",
-        version = false,
-        build = ":TSUpdate",
-        event = "VeryLazy",
-        lazy = vim.fn.argc(-1) == 0,
-        config = function()
-            require('nvim-treesitter.configs').setup({
-                ensure_installed = {
-                    'vimdoc', 'c', 'cpp', 'lua', 'rust', 'python', 'diff',
-                    'regex', 'yaml', 'json', 'vim', 'bibtex', 'cmake',
-                    'fortran'
-                },
-                sync_install = true,
-                indent = {
-                    enable = true,
-                },
-                highlight = {
-                    enable = true,
-                },
-            })
-        end,
-    },
+  "romus204/tree-sitter-manager.nvim",
+  dependencies = {}, -- tree-sitter CLI must be installed system-wide
+  config = function()
+    require("tree-sitter-manager").setup({
+      -- Default Options
+      -- ensure_installed = {}, -- list of parsers to install at the start of a neovim session
+      -- border = nil, -- border style for the window (e.g. "rounded", "single"), if nil, use the default border style defined by 'vim.o.winborder'. See :h 'winborder' for more info.
+      -- auto_install = false, -- if enabled, install missing parsers when editing a new file
+      -- highlight = true, -- treesitter highlighting is enabled by default
+      -- languages = {}, -- override or add new parser sources
+      -- parser_dir = vim.fn.stdpath("data") .. "/site/parser",
+      -- query_dir = vim.fn.stdpath("data") .. "/site/queries",
+    })
+  end
 }
-

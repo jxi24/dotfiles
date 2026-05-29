@@ -40,7 +40,6 @@ return {
             "nvim-lua/plenary.nvim",
             "orjangj/neotest-ctest",
             "antoinemadec/FixCursorHold.nvim",
-            "nvim-treesitter/nvim-treesitter",
             "nvim-neotest/neotest-python",
         },
         config = function()

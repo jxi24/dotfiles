@@ -98,11 +98,12 @@ return {
     },
     {
         "saghen/blink.cmp",
-        build = 'cargo build --release',
         dependencies = {
+            "saghen/blink.lib",
             "rafamadriz/friendly-snippets",
             { 'L3MON4D3/LuaSnip', version = 'v2.*' },
         },
+        build = function() require('blink.cmp').build():wait(60000) end,
 
         opts = {
             keymap = { preset = 'default',
