@@ -1,27 +1,18 @@
 return {
     {
+        -- Only supplies the server definitions in lsp/*.lua; servers are configured with
+        -- vim.lsp.config() and enabled by mason-lspconfig through vim.lsp.enable().
+        -- blink.cmp registers its completion capabilities for every server itself.
         "neovim/nvim-lspconfig",
-        -- event = { "BufReadPost", "BufWritePost", "BufNewFile" },
         lazy = false,
         dependencies = {
-            "williamboman/mason.nvim",
-            "williamboman/mason-lspconfig.nvim",
+            "mason-org/mason.nvim",
+            "mason-org/mason-lspconfig.nvim",
             "j-hui/fidget.nvim",
-            'saghen/blink.cmp',
         },
         config = function()
-            local capabilities = vim.lsp.protocol.make_client_capabilities()
-            capabilities = vim.tbl_deep_extend('force', capabilities,
-                require('blink.cmp').get_lsp_capabilities({}, false))
-
-            capabilities = vim.tbl_deep_extend('force', capabilities, {
-                textDocument = {
-                    foldingRange = {
-                        dynamicRegistration = false,
-                        lineFoldingOnly = true
-                    }
-                }
-            })
+            -- clangd writes its info-level log to stderr, which nvim records in lsp.log as errors
+            vim.lsp.config('clangd', { cmd = { 'clangd', '--log=error' } })
 
             require('fidget').setup({})
             require('mason').setup()
@@ -33,48 +24,31 @@ return {
                     'lua_ls',
                     'rust_analyzer',
                 },
-                handlers = {
-                    function(server_name)
-                        require('lspconfig')[server_name].setup {
-                            capabilities = capabilities
-                        }
-                    end,
-                },
             })
             vim.diagnostic.config({
                 signs = {
                     text = {
                         [vim.diagnostic.severity.ERROR] = "󰅚 ",
                         [vim.diagnostic.severity.WARN] = "󰀪 ",
-                        [vim.diagnostic.severity.INFO] = " ",
+                        [vim.diagnostic.severity.INFO] = " ",
                         [vim.diagnostic.severity.HINT] = "󰌶 ",
                     },
-                    numhl = {
-                        [vim.diagnostic.severity.ERROR] = "",
-                        [vim.diagnostic.severity.WARN] = "",
-                        [vim.diagnostic.severity.INFO] = "",
-                        [vim.diagnostic.severity.HINT] = "",
-                    },
-                }
+                },
             })
         end,
+        -- Picker-based <leader>l maps (definitions, references, ...) live in snacks.lua.
+        -- Built-in equivalents also exist: K, grn, gra, grr, gri, gO, [d, ]d, <C-s>.
         keys = {
             { "<leader>l", "", desc = "Lsp" },
-            { "<leader>li", "<cmd>LspInfo<cr>", desc = "Lsp Info" },
-            { "<leader>ld", function() require('telescope.builtin').lsp_definitions({ reuse_win = true }) end, desc = "Goto Definition" },
-            { "<leader>lr", function() require('telescope.builtin').lsp_references() end, desc = "References" },
-            { "<leader>lI", function() require('telescope.builtin').lsp_implementations({ reuse_win = true }) end, desc = "Goto Implementation" },
-            { "<leader>ly", function() require('telescope.builtin').lsp_type_definitions({ reuse_win = true }) end, desc = "Goto Type Definition" },
-            { "<leader>lD", vim.lsp.buf.declaration(), desc = "Goto Declaration" },
-            -- { "K", vim.lsp.buf.hover, desc = "Hover" },
+            { "<leader>li", "<cmd>checkhealth vim.lsp<cr>", desc = "Lsp Info" },
             { "<leader>lK", vim.lsp.buf.hover, desc = "Hover" },
-            { "<C-h>", vim.lsp.buf.signature_help, mode="i", desc = "Signature Help" },
+            { "<C-h>", vim.lsp.buf.signature_help, mode = "i", desc = "Signature Help" },
             { "<leader>lR", vim.lsp.buf.rename, desc = "Rename" },
-            { "<leader>lp", vim.diagnostic.goto_prev, desc = "Prev Diagnostic" },
-            { "<leader>ln", vim.diagnostic.goto_next, desc = "Next Diagnostic" },
+            { "<leader>lp", function() vim.diagnostic.jump({ count = -1, float = true }) end, desc = "Prev Diagnostic" },
+            { "<leader>ln", function() vim.diagnostic.jump({ count = 1, float = true }) end, desc = "Next Diagnostic" },
             { "<leader>le", vim.diagnostic.open_float, desc = "Show Error Messages" },
-            { "<leader>lq", vim.lsp.buf.code_action, desc = "Code action", mode = { "n", "v" }},
-            { "<leader>lh", "<cmd>ClangdSwitchSourceHeader<cr>", desc = "Switch to Header/Source" },
+            { "<leader>lq", vim.lsp.buf.code_action, desc = "Code action", mode = { "n", "v" } },
+            { "<leader>lh", "<cmd>LspClangdSwitchSourceHeader<cr>", desc = "Switch to Header/Source" },
         },
     },
     {
@@ -123,22 +97,18 @@ return {
         opts_extend = { "sources.default" }
     },
     {
-        "nvimtools/none-ls.nvim",
-        opts = function(_, opts)
-            local nls = require("null-ls")
-            opts.sources = vim.list_extend(opts.sources or {}, {
-                nls.builtins.diagnostics.cmake_lint,
+        "mfussenegger/nvim-lint",
+        ft = { "cmake" },
+        config = function()
+            local lint = require("lint")
+            lint.linters_by_ft = {
+                cmake = { "cmake_lint" },
+            }
+            vim.api.nvim_create_autocmd({ "BufReadPost", "BufWritePost" }, {
+                group = vim.api.nvim_create_augroup("nvim-lint", { clear = true }),
+                callback = function() lint.try_lint() end,
             })
+            lint.try_lint()
         end,
     },
-    {
-        "mfussenegger/nvim-lint",
-        opts = {
-            linters_bt_ft = {
-                cmake = { "cmakelint" },
-            },
-        },
-        config = function() end,
-    },
 }
-

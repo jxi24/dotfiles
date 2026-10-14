@@ -35,11 +35,11 @@ return {
     },
     {
         "nvim-neotest/neotest",
+        cmd = "Neotest",
         dependencies = {
             "nvim-neotest/nvim-nio",
             "nvim-lua/plenary.nvim",
             "orjangj/neotest-ctest",
-            "antoinemadec/FixCursorHold.nvim",
             "nvim-neotest/neotest-python",
         },
         config = function()
@@ -56,31 +56,27 @@ return {
             require("neotest").setup({
                 adapters = {
                     require("neotest-python")({}),
-                    require("neotest-ctest").setup({}),
-                }
+                    -- Catch2 (and gtest/doctest) through CTest; see lua/util/ctest.lua
+                    require("util.ctest").adapter(),
+                },
             })
         end,
-        keys = function()
-            local neotest = require("neotest")
-
-            return {
-                { "<leader>t", "", desc = "Testing" },
-                { "<leader>tf", function() neotest.run.run(vim.fn.expand("%")) end, desc = "Run File" },
-                { "<leader>tt", function() neotest.run.run() end, desc = "Run Nearest" },
-                { "<leader>tw", function() neotest.run.run(vim.loop.cwd()) end, desc = "Run workspace" },
-                { "<leader>tr",
-                    function()
-                        neotest.output.open({ short = true, auto_close = true })
-                    end,
-                    desc = "Results (short)",
-                },
-                { "<leader>tR",
-                    function()
-                        neotest.output.open({ enter = true})
-                    end,
-                    desc = "Results (full)",
-                },
-            }
-        end,
+        keys = {
+            { "<leader>t", "", desc = "Testing" },
+            { "<leader>tt", function() require("neotest").run.run() end, desc = "Run Nearest" },
+            { "<leader>tf", function() require("neotest").run.run(vim.fn.expand("%")) end, desc = "Run File" },
+            { "<leader>tw", function() require("neotest").run.run(vim.uv.cwd()) end, desc = "Run workspace" },
+            { "<leader>tl", function() require("neotest").run.run_last() end, desc = "Run Last" },
+            { "<leader>td", function() require("neotest").run.run({ strategy = "dap" }) end, desc = "Debug Nearest" },
+            { "<leader>tS", function() require("neotest").run.stop() end, desc = "Stop" },
+            { "<leader>ts", function() require("neotest").summary.toggle() end, desc = "Summary" },
+            { "<leader>to", function() require("neotest").output_panel.toggle() end, desc = "Output Panel" },
+            { "<leader>tr", function() require("neotest").output.open({ short = true, auto_close = true }) end, desc = "Results (short)" },
+            { "<leader>tR", function() require("neotest").output.open({ enter = true }) end, desc = "Results (full)" },
+            { "]T", function() require("neotest").jump.next({ status = "failed" }) end, desc = "Next Failed Test" },
+            { "[T", function() require("neotest").jump.prev({ status = "failed" }) end, desc = "Previous Failed Test" },
+            { "<leader>tc", function() require("util.ctest").select() end, desc = "CTest Build Directory" },
+            { "<leader>tB", function() require("util.ctest").toggle_build() end, desc = "Toggle Build Before Run" },
+        },
     }
 }

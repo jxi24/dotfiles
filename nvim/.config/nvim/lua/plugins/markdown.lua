@@ -3,7 +3,7 @@ return {
         "OXY2DEV/markview.nvim",
         lazy = false,
         dependencies = {
-            'echasnovski/mini.icons',
+            'nvim-mini/mini.icons',
             'saghen/blink.cmp',
         },
         priority = 49,

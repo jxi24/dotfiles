@@ -2,36 +2,7 @@ return {
     {
         "folke/which-key.nvim",
         event = "VeryLazy",
-        init = function()
-            vim.o.timeout = true
-            vim.o.timeoutlen = 300
-        end,
         opts = {},
-    },
-    {
-        "rcarriga/nvim-notify",
-        keys = {
-            {
-                "<leader>un",
-                function()
-                    require("notify").dismiss({ silent = true, pending = true })
-                end,
-                desc = "Dismiss All Notifications",
-            },
-        },
-        opts = {
-            stages = "static",
-            timeout = 3000,
-            max_height = function()
-                return math.floor(vim.o.lines * 0.75)
-            end,
-            max_width = function()
-                return math.floor(vim.o.columns * 0.75)
-            end,
-            on_open = function(win)
-                vim.api.nvim_win_set_config(win, { zindex = 100 })
-            end,
-        },
     },
     {
         'nvim-lualine/lualine.nvim',
@@ -72,13 +43,13 @@ return {
                                 warn = "DiagnosticWarn"
                             },
                             sections = { "error", "warn", "info" },
-                            sources = { "nvim_lsp", "nvim_diagnostic" },
+                            sources = { "nvim_diagnostic" },
                             symbols = {
                                 error = " ",
                                 info = " ",
                                 warn = " "
                             },
-                            update_in_insert = false 
+                            update_in_insert = false
                         }
                     },
                     lualine_c = { "filename" },
@@ -96,7 +67,7 @@ return {
 
             return opts
         end,
-        dependencies = { 'echasnovski/mini.icons' },
+        dependencies = { 'nvim-mini/mini.icons' },
     },
     {
         "folke/noice.nvim",
@@ -110,7 +81,6 @@ return {
                 override = {
                     ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
                     ["vim.lsp.util.stylize_markdown"] = true,
-                    ["cmp.entry.get_documentation"] = true,
                 },
             },
             routes = {
@@ -133,10 +103,12 @@ return {
         },
         keys = {
             { "<leader>sn", "", desc = "+noice" },
+            { "<leader>snl", function() require("noice").cmd("last") end, desc = "Noice Last Message" },
+            { "<leader>snh", function() require("noice").cmd("history") end, desc = "Noice History" },
+            { "<leader>snd", function() require("noice").cmd("dismiss") end, desc = "Dismiss All" },
         },
         dependencies = {
             "MunifTanjim/nui.nvim",
-            "rcarriga/nvim-notify",
         },
     },
     {
@@ -148,8 +120,9 @@ return {
     },
     {
         'mrjones2014/smart-splits.nvim',
-        config = true,
-        priority = 1000,
+        -- Load at startup: it sets the IS_NVIM user var that wezterm uses for pane navigation
+        lazy = false,
+        opts = {},
         keys = {
              { "<A-h>", function() require('smart-splits').resize_left() end, desc = "Resize left" },
              { "<A-j>", function() require('smart-splits').resize_down() end, desc = "Resize down" },
@@ -162,8 +135,8 @@ return {
         }
     },
     {
-        'echasnovski/mini.map',
-        init = function()
+        'nvim-mini/mini.map',
+        config = function()
             local map = require('mini.map')
             local diagnostic_integration = map.gen_integration.diagnostic({
                 error = { "DiagnosticFloatingError" },

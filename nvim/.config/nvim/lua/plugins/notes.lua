@@ -20,7 +20,7 @@ return {
             },
             daily_notes = {
                 date_format = "%Y-%m-%d",
-                template = "~/Documents/Obsidian/Work/templates/daily",
+                template = "daily.md", -- relative to templates.folder
                 folder = "Daily Notes"
             },
             completion = {
@@ -33,7 +33,7 @@ return {
                 vim.fn.jobstart({"xdg-open", url})
             end,
             templates = {
-                folder = "~/Documents/Obsidian/Work/templates",
+                folder = "Templates", -- relative to the vault root; a "~/" path here is joined onto the vault and creates <vault>/~/...
                 date_format = "%Y-%m-%d",
                 time_format = "%H:%M",
                 substitutions = {
@@ -48,17 +48,9 @@ return {
             { "<leader>ot", "<cmd>Obsidian today<cr>", desc = "Today's note" },
             { "<leader>oy", "<cmd>Obsidian yesterday<cr>", desc = "Yesterday's note" },
             { "<leader>od", "<cmd>Obsidian dailies<cr>", desc = "Open daily note selector" },
-            { "<leader>oc", function()
-                                return require("obsidian").util.toggle_checkbox()
-                            end,
-                    desc = "Toggle checkbox", { buffer = true }},
-            { "gf", function() return require("obsidian").util.gf_passthrough() end,
-                desc = "gf Passthrough", { buffer = true, noremap = false, expr = true} },
-            { "<cr>",
-                function()
-                    return require("obsidian").util.smart_action()
-                end,
-                desc = "Obsidian smart action", { buffer = true, expr = true }},
+            { "<leader>oc", "<cmd>Obsidian toggle_checkbox<cr>", desc = "Toggle checkbox" },
+            -- <CR> smart action, ]o/[o link navigation and gf (via includeexpr)
+            -- are set up by obsidian.nvim itself in vault buffers.
         },
     }
 }

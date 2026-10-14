@@ -81,12 +81,18 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   desc = 'Highlight when yanking (copying) text',
   group = vim.api.nvim_create_augroup('highlight-yank', { clear = true }),
   callback = function()
-    vim.highlight.on_yank()
+    vim.hl.on_yank()
   end,
 })
 
 require("config.keymaps")
 require("config.lazy")
-require('smart-splits').setup()
 
 vim.cmd.colorscheme "catppuccin-frappe"
+
+-- GTD commands for the notes vault (:GtdNow, :GtdPlan, ...). <leader>g is taken by git, so use <leader>j.
+local gtd = vim.fn.expand('~/Documents/Obsidian/Work/Utility/nvim/gtd.lua')
+if vim.fn.filereadable(gtd) == 1 then
+    vim.g.gtd_prefix = '<leader>j'
+    dofile(gtd)
+end

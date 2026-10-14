@@ -41,8 +41,8 @@ return {
             { "<leader>dp", function() require("dap").pause() end, desc = "Pause" },
             { "<leader>dr", function() require("dap").repl.toggle() end, desc = "Toggle REPL" },
             { "<leader>ds", function() require("dap").session() end, desc = "Session" },
-            { "<leader>ds", function() require("dap").terminate() end, desc = "Terminate" },
-            { "<leader>ds", function() require("dap.ui.widgets").hover() end, desc = "Widgets" },
+            { "<leader>dt", function() require("dap").terminate() end, desc = "Terminate" },
+            { "<leader>dw", function() require("dap.ui.widgets").hover() end, desc = "Widgets" },
         },
 
         config = function()
@@ -53,25 +53,30 @@ return {
             })
 
             vim.api.nvim_set_hl(0, "DapStoppedLine", { default = true, link = "Visual" })
-            local vscode = require("dap.ext.vscode")
-            local json = require('plenary.json')
-            vscode.json_decode = function(str)
-                return vim.json.decode(json.json_strip_comments(str))
-            end
 
             local dap = require("dap")
-            dap.configurations.cpp = {
+            -- gdb (14+) speaks DAP natively, no extra adapter needed. Also used by
+            -- neotest-ctest to debug single Catch2 test cases.
+            dap.adapters.gdb = {
+                type = "executable",
+                command = "gdb",
+                args = { "--interpreter=dap", "--eval-command", "set print pretty on" },
+            }
+            local native = {
                 {
                     name = "Launch file",
-                    type = "cppdbg",
+                    type = "gdb",
                     request = "launch",
                     program = function()
                         return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
                     end,
                     cwd = '${workspaceFolder}/build',
-                    stopAtEntry = true,
+                    stopAtBeginningOfMainSubprogram = true,
                 },
             }
+            dap.configurations.c = native
+            dap.configurations.cpp = native
+            dap.configurations.fortran = native
         end,
     },
 
