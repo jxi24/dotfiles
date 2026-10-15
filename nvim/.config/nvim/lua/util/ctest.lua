@@ -134,6 +134,35 @@ function M.toggle_build()
     notify("Build before running tests: " .. (M.build_first and "on" or "off"))
 end
 
+---Build and run every CTest test carrying `label` (e.g. the Fortran suite) in a terminal
+---split. For suites neotest can't map to source positions.
+---@param label string
+function M.run_label(label)
+    local root = M.root(vim.api.nvim_buf_get_name(0)) or vim.uv.cwd()
+    local dir = M.build_dir(root)
+    if not dir then
+        return notify("No configured CTest build directory under " .. root, vim.log.levels.WARN)
+    end
+    local result = vim.system({ "ctest", "--test-dir", dir, "-L", label, "--show-only=json-v1" }, { text = true }):wait()
+    local ok, decoded = pcall(vim.json.decode, result.stdout or "")
+    local targets = {}
+    for _, test in ipairs(ok and decoded.tests or {}) do
+        if test.command and test.command[1] then
+            targets[vim.fs.basename(test.command[1])] = true
+        end
+    end
+    if vim.tbl_isempty(targets) then
+        return notify("No CTest tests labelled '" .. label .. "' in " .. dir, vim.log.levels.WARN)
+    end
+    local build = { "cmake", "--build", dir, "--parallel", tostring(vim.uv.available_parallelism()), "--target" }
+    vim.list_extend(build, vim.tbl_keys(targets))
+    local run = { "ctest", "--test-dir", dir, "-L", label, "--output-on-failure" }
+    local cmd = table.concat(vim.tbl_map(vim.fn.shellescape, build), " ") .. " && "
+        .. table.concat(vim.tbl_map(vim.fn.shellescape, run), " ")
+    vim.cmd("botright 15split")
+    vim.cmd.terminal(cmd)
+end
+
 ---Tests registered with CTest in `dir`, keyed by name.
 ---@return table<string, { executable: string, args: string[], cwd?: string }>
 local function ctest_tests(dir)

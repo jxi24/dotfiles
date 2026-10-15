@@ -13,6 +13,50 @@ return {
         config = function()
             -- clangd writes its info-level log to stderr, which nvim records in lsp.log as errors
             vim.lsp.config('clangd', { cmd = { 'clangd', '--log=error' } })
+            -- basedpyright's default "recommended" mode is close to strict; ruff handles
+            -- import sorting and lint, basedpyright handles types and hover.
+            vim.lsp.config('basedpyright', {
+                settings = {
+                    basedpyright = {
+                        disableOrganizeImports = true,
+                        analysis = { typeCheckingMode = "standard" },
+                    },
+                },
+            })
+            -- fortls walks every directory under the root at startup and stalls on build
+            -- trees (excl_paths doesn't stop the walk; its ** globs trip over broken
+            -- symlinks). Without a project .fortls config, hand it the directories that
+            -- actually contain Fortran sources.
+            local fortran_ext = { f = true, f77 = true, f90 = true, f95 = true, f03 = true, f08 = true }
+            local function skip_dir(name)
+                return name:match('^[._]') or name:match('^build') or name:match('^cmake%-build')
+                    or name == 'out' or name == 'install' or name == 'external'
+            end
+            vim.lsp.config('fortls', {
+                cmd = function(dispatchers, config)
+                    local cmd = { 'fortls', '--notify_init', '--hover_signature', '--hover_language=fortran', '--use_signature_help' }
+                    local root = config.root_dir
+                    local has_config = root and vim.iter({ '.fortls', '.fortlsrc', '.fortls.json' }):any(function(f)
+                        return vim.uv.fs_stat(vim.fs.joinpath(root, f)) ~= nil
+                    end)
+                    if root and not has_config then
+                        local dirs = {}
+                        for path, type in vim.fs.dir(root, { depth = 20, skip = function(name) return not skip_dir(name) end }) do
+                            local ext = path:match('%.(%w+)$')
+                            if type == 'file' and ext and fortran_ext[ext:lower()] then
+                                dirs[vim.fs.dirname(path)] = true
+                            end
+                        end
+                        if not vim.tbl_isempty(dirs) then
+                            vim.list_extend(cmd, { '--source_dirs', unpack(vim.tbl_keys(dirs)) })
+                        end
+                    end
+                    return vim.lsp.rpc.start(cmd, dispatchers, { cwd = root })
+                end,
+            })
+            vim.lsp.config('ruff', {
+                on_attach = function(client) client.server_capabilities.hoverProvider = false end,
+            })
 
             require('fidget').setup({})
             require('mason').setup()
@@ -23,8 +67,13 @@ return {
                     'neocmake',
                     'lua_ls',
                     'rust_analyzer',
+                    'basedpyright',
+                    'ruff',
+                    'yamlls',
+                    'fortitude', -- Fortran linter, runs as a language server
                 },
             })
+
             vim.diagnostic.config({
                 signs = {
                     text = {

@@ -16,6 +16,7 @@ return {
 
         dependencies = {
             "rcarriga/nvim-dap-ui",
+            "mfussenegger/nvim-dap-python",
             { "theHamsta/nvim-dap-virtual-text", opts = {}, },
             {
                 "jay-babu/mason-nvim-dap.nvim",
@@ -48,9 +49,13 @@ return {
         config = function()
             require('mason-nvim-dap').setup({
                 automatic_installation = true,
-                handlers = {},
+                handlers = {
+                    python = function() end, -- set up by nvim-dap-python below
+                },
                 ensure_installed = {'python'},
             })
+            -- debugpy from mason; uses the active venv's python for the debuggee
+            require('dap-python').setup('debugpy-adapter')
 
             vim.api.nvim_set_hl(0, "DapStoppedLine", { default = true, link = "Visual" })
 

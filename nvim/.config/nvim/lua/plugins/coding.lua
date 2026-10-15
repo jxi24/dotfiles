@@ -77,6 +77,7 @@ return {
             { "[T", function() require("neotest").jump.prev({ status = "failed" }) end, desc = "Previous Failed Test" },
             { "<leader>tc", function() require("util.ctest").select() end, desc = "CTest Build Directory" },
             { "<leader>tB", function() require("util.ctest").toggle_build() end, desc = "Toggle Build Before Run" },
+            { "<leader>tF", function() require("util.ctest").run_label("fortran") end, desc = "Fortran Suite (CTest label)" },
         },
     }
 }

@@ -8,6 +8,7 @@ return {
                 c = { "clang_format" },
                 cpp = { "clang_format" },
                 cmake = { "cmake_format" },
+                python = { "ruff_format" },
             },
             formatters = {
                 -- Only format C/C++ in projects that define a style; LLVM's default
@@ -15,6 +16,25 @@ return {
                 clang_format = {
                     require_cwd = true,
                     cwd = function(...) return require("conform.util").root_file({ ".clang-format", "_clang-format" })(...) end,
+                },
+                -- Same for Python: only where ruff is configured (ruff.toml or [tool.ruff])
+                ruff_format = {
+                    require_cwd = true,
+                    cwd = function(_, ctx)
+                        for dir in vim.fs.parents(ctx.filename) do
+                            if vim.uv.fs_stat(dir .. "/ruff.toml") or vim.uv.fs_stat(dir .. "/.ruff.toml") then
+                                return dir
+                            end
+                            local pyproject = dir .. "/pyproject.toml"
+                            if vim.uv.fs_stat(pyproject) then
+                                for line in io.lines(pyproject) do
+                                    if line:match("^%[tool%.ruff") then
+                                        return dir
+                                    end
+                                end
+                            end
+                        end
+                    end,
                 },
             },
             -- On save only the formatters above run; <leader>lf also falls back to the LSP.
