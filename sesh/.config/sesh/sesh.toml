@@ -1,0 +1,24 @@
+#:schema https://github.com/joshmedeski/sesh/raw/main/sesh.schema.json
+# sesh: the workspace picker (wezterm: smart_workspace_switcher.wezterm).
+# Lists running tmux sessions, these configured sessions, and zoxide dirs.
+#   tmux: leader s -> `sesh picker -i`, leader S -> `sesh last`
+
+[tui]
+show_icons = true
+show_windows = true
+preview = true
+
+# wezterm: CTRL|SHIFT m -> 'Monitoring' workspace running htop
+[[session]]
+name = "Monitoring"
+path = "~"
+startup_command = "htop"
+
+[[session]]
+name = "journal"
+path = "~/Documents/Notes/Personal"
+startup_command = "nvim + journal.md"
+
+[[session]]
+name = "dotfiles"
+path = "~/dotfiles"

@@ -1,0 +1,42 @@
+# Ghostty config — the terminal half of wezterm/.config/wezterm/wezterm.lua.
+# tmux owns tabs/splits/sessions, so Ghostty is kept to rendering + a few keys.
+# Check option names against your version with: ghostty +show-config --default --docs
+
+# --- Appearance (wezterm: color_scheme, font, font_size, decorations, padding)
+theme = Catppuccin Frappe
+font-family = Hack Nerd Font Mono
+font-size = 10
+window-decoration = none
+window-padding-x = 0
+window-padding-y = 4,0
+# Ghostty's audible bell is off by default (wezterm: audible_bell = 'Disabled')
+
+# --- Shell / startup
+# Every window lands in tmux. `sesh connect` attaches to (or creates) the
+# session for $HOME; tmux-continuum restores saved sessions on server start
+# (wezterm: gui-startup -> resurrect_on_gui_startup).
+command = /bin/bash -lc "sesh connect ~ || exec tmux new-session -A -s main"
+# Install Ghostty's terminfo on SSH hosts so TERM=xterm-ghostty works there.
+shell-integration-features = ssh-terminfo,ssh-env
+
+# --- Keybinds
+# Start from nothing so Ghostty never steals a key tmux or nvim wants
+# (defaults include alt+1..9, ctrl+shift+arrows, ctrl+alt+arrows, ...).
+keybind = clear
+
+keybind = ctrl+shift+c=copy_to_clipboard
+keybind = ctrl+shift+v=paste_from_clipboard
+keybind = shift+insert=paste_from_selection
+keybind = ctrl+equal=increase_font_size:1
+keybind = ctrl+minus=decrease_font_size:1
+keybind = ctrl+zero=reset_font_size
+keybind = ctrl+shift+n=new_window
+keybind = ctrl+shift+comma=reload_config
+keybind = ctrl+shift+i=inspector:toggle
+
+# wezterm: CTRL|ALT l -> ShowLauncher. Closest Ghostty equivalent.
+keybind = ctrl+alt+l=toggle_command_palette
+
+# wezterm: CTRL|SHIFT m -> Monitoring workspace. Sent as "C-a M" so tmux
+# handles it with a plain prefix binding (see tmux.conf).
+keybind = ctrl+shift+m=text:\x01M

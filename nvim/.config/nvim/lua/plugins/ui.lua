@@ -148,6 +148,16 @@ return {
     },
     {
         'mrjones2014/smart-splits.nvim',
+        -- v3 moved multiplexer support into separate backend plugins with no
+        -- auto-detection, and its WezTerm backend is still marked unstable.
+        -- v2 auto-detects both WezTerm (IS_NVIM user var) and tmux
+        -- (@pane-is-vim), so stay on it while running both terminals.
+        -- After WezTerm is gone, move to v3 + smart-splits-nvim/backend-tmux.
+        tag = 'v2.1.1-final',
+        -- Must load at startup: tmux only forwards C-hjkl/M-hjkl to nvim once
+        -- the plugin has set @pane-is-vim. A `keys`-triggered lazy load never
+        -- receives the first keypress inside tmux.
+        lazy = false,
         config = true,
         priority = 1000,
         keys = {

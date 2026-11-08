@@ -4,7 +4,7 @@ return {
     -- add any options here
     cli = {
       mux = {
-        backend = "zellij",
+        -- backend omitted: sidekick picks zellij when $ZELLIJ is set, else tmux
         enabled = true,
       },
     },
