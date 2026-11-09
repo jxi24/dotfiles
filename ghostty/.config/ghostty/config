@@ -1,0 +1,33 @@
+# ~/.config/ghostty/config
+# Translated from wezterm.lua. Ghostty owns appearance + shell only;
+# all multiplexing (panes/tabs/workspaces) lives in tmux.
+
+# --- Appearance ---------------------------------------------------------
+theme        = catppuccin-frappe
+font-family  = "Hack Nerd Font Mono"
+font-size    = 10
+
+window-decoration = none
+# wezterm window_padding: top=4, bottom=0, left=0, right=0
+window-padding-x = 0
+window-padding-y = 4,0
+window-padding-balance = false
+
+# wezterm colors.compose_cursor = 'orange' (Ghostty has no separate
+# compose cursor; this sets the general cursor color)
+cursor-color = orange
+
+# wezterm scrollback_lines = 5000. Ghostty counts bytes, not lines, and
+# tmux owns scrollback once you're inside it, so this is just a safety net.
+scrollback-limit = 10000000
+
+# --- Shell --------------------------------------------------------------
+# wezterm default_prog = { "/bin/bash" }
+command = /bin/bash
+
+# To auto-start tmux instead, use:
+#   command = /bin/bash -lc "tmux new -A -s main"
+
+# Notes:
+# - enable_wayland: Ghostty auto-detects Wayland; no option needed.
+# - audible_bell = 'Disabled': Ghostty produces no audible bell, nothing to set.

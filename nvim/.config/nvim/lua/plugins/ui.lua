@@ -120,9 +120,15 @@ return {
     },
     {
         'mrjones2014/smart-splits.nvim',
-        -- Load at startup: it sets the IS_NVIM user var that wezterm uses for pane navigation
+        version = '^3',
+        -- v3 ships no multiplexer support; the WezTerm backend sets the IS_NVIM user var that
+        -- the matching wezterm plugin checks before forwarding <C-h/j/k/l> into nvim.
+        dependencies = { 'smart-splits-nvim/backend-wezterm' },
+        -- Load at startup: the backend is resolved (and IS_NVIM set) during setup()
         lazy = false,
-        opts = {},
+        opts = {
+            mux = { backend = 'smart-splits-backend-wezterm' },
+        },
         keys = {
              { "<A-h>", function() require('smart-splits').resize_left() end, desc = "Resize left" },
              { "<A-j>", function() require('smart-splits').resize_down() end, desc = "Resize down" },

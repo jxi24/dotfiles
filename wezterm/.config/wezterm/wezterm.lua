@@ -5,52 +5,17 @@ local act = wezterm.action
 local resurrect = wezterm.plugin.require("https://github.com/MLFlexer/resurrect.wezterm")
 local tabline = wezterm.plugin.require("https://github.com/michaelbrusegard/tabline.wez")
 local workspace_switcher = wezterm.plugin.require("https://github.com/MLFlexer/smart_workspace_switcher.wezterm")
-
-local function is_vim(pane)
-    return pane:get_user_vars().IS_NVIM == 'true'
-end
+-- WezTerm half of smart-splits.nvim v3 (the nvim half is smart-splits-nvim/backend-wezterm)
+local smart_splits = wezterm.plugin.require("https://github.com/smart-splits-nvim/backend-wezterm")
 
 local function basename(s)
 	return string.gsub(s, "(.*[/\\])(.*)", "%2")
 end
 
-local direction_keys = {
-  Left = 'h',
-  Down = 'j',
-  Up = 'k',
-  Right = 'l',
-  -- reverse lookup
-  h = 'Left',
-  j = 'Down',
-  k = 'Up',
-  l = 'Right',
-}
-
-
-local function split_nav(resize_or_move, key)
-  return {
-    key = key,
-    mods = resize_or_move == 'resize' and 'META' or 'CTRL',
-    action = wezterm.action_callback(function(win, pane)
-      if is_vim(pane) then
-        -- pass the keys through to vim/nvim
-        win:perform_action({
-          SendKey = { key = key, mods = resize_or_move == 'resize' and 'META' or 'CTRL' },
-        }, pane)
-      else
-        if resize_or_move == 'resize' then
-          win:perform_action({ AdjustPaneSize = { direction_keys[key], 3 } }, pane)
-        else
-          win:perform_action({ ActivatePaneDirection = direction_keys[key] }, pane)
-        end
-      end
-    end),
-  }
-end
-
 local config = wezterm.config_builder()
 
 config.enable_wayland = true
+config.enable_kitty_graphics = true
 config.default_prog = { "/bin/bash" }
 
 config.color_scheme = 'Catppuccin Frappe'
@@ -196,15 +161,6 @@ config.keys = {
         action = workspace_switcher.switch_to_prev_workspace(),
     },
 
-    split_nav('move', 'h'),
-    split_nav('move', 'j'),
-    split_nav('move', 'k'),
-    split_nav('move', 'l'),
-    split_nav('resize', 'h'),
-    split_nav('resize', 'j'),
-    split_nav('resize', 'k'),
-    split_nav('resize', 'l'),
-
     {
         key = 'x',
         mods = 'LEADER',
@@ -222,6 +178,10 @@ for i = 1, 9 do
         action = act.ActivateTab(i - 1),
     })
 end
+
+-- CTRL+hjkl move / META+hjkl resize between panes, forwarded into nvim when it sets IS_NVIM.
+-- Appends to config.keys, so it must come after config.keys is assigned.
+smart_splits.apply_to_config(config)
 
 -- Resurrect
 resurrect.state_manager.periodic_save({
@@ -288,14 +248,23 @@ wezterm.on("smart_workspace_switcher.workspace_switcher.created", function(windo
 	}))
 	local workspace_state = resurrect.workspace_state
 
-	workspace_state.restore_workspace(resurrect.state_manager.load_state(label, "workspace"), {
-		window = window,
-		relative = true,
-		restore_text = true,
+	-- Only restore if a saved state exists; a missing state file must not break switching.
+	local ok, err = pcall(function()
+		local state = resurrect.state_manager.load_state(label, "workspace")
+		if state and state.window_states then
+			workspace_state.restore_workspace(state, {
+				window = window,
+				relative = true,
+				restore_text = true,
 
-		resize_window = false,
-		on_pane_restore = resurrect.tab_state.default_on_pane_restore,
-	})
+				resize_window = false,
+				on_pane_restore = resurrect.tab_state.default_on_pane_restore,
+			})
+		end
+	end)
+	if not ok then
+		wezterm.log_warn("resurrect restore skipped for " .. label .. ": " .. tostring(err))
+	end
 end)
 
 wezterm.on("smart_workspace_switcher.workspace_switcher.chosen", function(window, path, label)
@@ -309,9 +278,16 @@ end)
 
 wezterm.on("smart_workspace_switcher.workspace_switcher.selected", function(window, path, label)
 	wezterm.log_info(window)
-	local workspace_state = resurrect.workspace_state
-	resurrect.state_manager.save_state(workspace_state.get_workspace_state())
-	resurrect.state_manager.write_current_state(label, "workspace")
+	-- Saving can fail on some pane layouts (resurrect pane_tree bug); never let that
+	-- abort the switch, since this handler runs before the switch happens.
+	local ok, err = pcall(function()
+		local workspace_state = resurrect.workspace_state
+		resurrect.state_manager.save_state(workspace_state.get_workspace_state())
+		resurrect.state_manager.write_current_state(label, "workspace")
+	end)
+	if not ok then
+		wezterm.log_warn("resurrect save failed before workspace switch: " .. tostring(err))
+	end
 end)
 
 wezterm.on("smart_workspace_switcher.workspace_switcher.start", function(window, _)
