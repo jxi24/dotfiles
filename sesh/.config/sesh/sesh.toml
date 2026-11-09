@@ -21,4 +21,4 @@ startup_command = "nvim + journal.md"
 
 [[session]]
 name = "dotfiles"
-path = "~/dotfiles"
+path = "~/.dotfiles"

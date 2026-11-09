@@ -1,24 +1,14 @@
----@param config {args?:string[]|fun():string[]?}
-local function get_args(config)
-  local args = type(config.args) == "function" and (config.args() or {}) or config.args or {}
-  config = vim.deepcopy(config)
-  ---@cast args string[]
-  config.args = function()
-    local new_args = vim.fn.input("Diffview with args: ", table.concat(args, " ")) --[[@as string]]
-    return vim.split(vim.fn.expand(new_args) --[[@as string]], " ")
-  end
-  return config
-end
-
 return {
     {
         "NeogitOrg/neogit",
         dependencies = {
             "nvim-lua/plenary.nvim",
             "sindrets/diffview.nvim",
-            "nvim-telescope/telescope.nvim",
+            "folke/snacks.nvim",
         },
-        config = true,
+        opts = {
+            integrations = { snacks = true, diffview = true },
+        },
         keys = {
             { "<leader>g", "", desc = "Git" },
             { "<leader>gn", "<cmd> Neogit<CR>", desc = "Open Neogit" },
@@ -33,7 +23,7 @@ return {
     },
     {
         "sindrets/diffview.nvim",
-        lazy = false,
+        cmd = { "DiffviewOpen", "DiffviewClose", "DiffviewFileHistory" },
         opts = function()
             local actions = require("diffview.actions")
 
@@ -41,7 +31,7 @@ return {
                 merge_tool = {
                     layout = "diff3_mixed",
                     disable_diagnostics = true,
-                    windbar_info = true,
+                    winbar_info = true,
                 },
                 keymaps = {
                     view = {
@@ -67,13 +57,10 @@ return {
     },
     {
         'trevorhauter/gitportal.nvim',
-        opts = function()
-            local gitportal = require("gitportal")
-
-            vim.keymap.set("n", "<leader>gp", gitportal.open_file_in_browser)
-            vim.keymap.set("v", "<leader>gp", gitportal.open_file_in_browser)
-            vim.keymap.set("n", "<leader>gP", gitportal.copy_link_to_clipboard)
-            vim.keymap.set("v", "<leader>gP", gitportal.copy_link_to_clipboard)
-        end,
+        opts = {},
+        keys = {
+            { "<leader>gp", function() require("gitportal").open_file_in_browser() end, mode = { "n", "v" }, desc = "Open in Browser" },
+            { "<leader>gP", function() require("gitportal").copy_link_to_clipboard() end, mode = { "n", "v" }, desc = "Copy Link" },
+        },
     }
 }

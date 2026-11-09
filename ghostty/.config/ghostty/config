@@ -12,10 +12,10 @@ window-padding-y = 4,0
 # Ghostty's audible bell is off by default (wezterm: audible_bell = 'Disabled')
 
 # --- Shell / startup
-# Every window lands in tmux. `sesh connect` attaches to (or creates) the
-# session for $HOME; tmux-continuum restores saved sessions on server start
-# (wezterm: gui-startup -> resurrect_on_gui_startup).
-command = /bin/bash -lc "sesh connect ~ || exec tmux new-session -A -s main"
+# Every window lands in tmux: the first attaches to the session for $HOME,
+# later ones get their own (see tmux-session.sh). tmux-continuum restores saved
+# sessions on server start (wezterm: gui-startup -> resurrect_on_gui_startup).
+command = /bin/bash -lc "$HOME/.config/ghostty/tmux-session.sh"
 # Install Ghostty's terminfo on SSH hosts so TERM=xterm-ghostty works there.
 shell-integration-features = ssh-terminfo,ssh-env
 

@@ -1,6 +1,6 @@
 return {
     { "catppuccin/nvim", name = "catppuccin", priority = 1000 },
-    { 'echasnovski/mini.hipatterns', version = false,
+    { 'nvim-mini/mini.hipatterns', version = false,
       opts = function()
             local hi = require('mini.hipatterns')
             return {
@@ -10,7 +10,7 @@ return {
                         pattern = "()#%x%x%x()%f[^%x%w]",
                         group = function(_, _, data)
                             local match = data.full_match
-                            local r, g, b = match:sub(2, 2), match:sub(3, 3), match.sub(4, 4)
+                            local r, g, b = match:sub(2, 2), match:sub(3, 3), match:sub(4, 4)
                             local hex_color = "#" .. r .. r .. g .. g .. b .. b
 
                             return MiniHipatterns.compute_hex_color_group(hex_color, "bg")
