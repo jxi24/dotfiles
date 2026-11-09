@@ -30,8 +30,11 @@ common=$(git -C "$dir" rev-parse --path-format=absolute --git-common-dir 2>/dev/
 [[ ${common##*/} == .bare ]] || die "this repo has no .bare directory"
 root=${common%/.bare}
 
-# Flat directory names: the sesh.toml wildcards only match one level deep.
-path=$root/${branch//\//-}
+# A branch that's already checked out opens where it is, whatever the directory
+# is called. Otherwise use a flat name: the sesh.toml wildcards match one level.
+path=$(git -C "$root" worktree list --porcelain |
+    awk -v ref="branch refs/heads/$branch" '/^worktree / { p = substr($0, 10) } $0 == ref { print p; exit }')
+[[ -n $path ]] || path=$root/${branch//\//-}
 
 created=false
 if [[ ! -e $path ]]; then
