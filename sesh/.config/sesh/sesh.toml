@@ -1,14 +1,89 @@
 #:schema https://github.com/joshmedeski/sesh/raw/main/sesh.schema.json
-# sesh: the workspace picker (wezterm: smart_workspace_switcher.wezterm).
-# Lists running tmux sessions, these configured sessions, and zoxide dirs.
+# sesh: the project picker. Lists running tmux sessions, these configured
+# sessions, and zoxide dirs.
 #   tmux: leader s -> `sesh picker -i`, leader S -> `sesh last`
+#
+# Layouts apply only when a session is first created. Connecting to a running
+# or restored session leaves it as it is. Each git worktree is its own session.
+# add-panes.sh creates the bottom panes (see the usage comment in that file).
 
 [tui]
 show_icons = true
 show_windows = true
 preview = true
 
-# wezterm: CTRL|SHIFT m -> 'Monitoring' workspace running htop
+# --- Reusable windows ---------------------------------------------------------
+
+[[window]]
+name = "build"
+startup_script = "cd build 2>/dev/null; clear"
+
+[[window]]
+name = "agent"
+
+[[window]]
+name = "plots"
+
+# --- Code: every worktree gets edit / build / agent ---------------------------
+
+[[wildcard]]
+pattern = "~/Documents/Projects/NeutrinoGenerator/Achilles/*"
+startup_command = "~/.config/sesh/add-panes.sh; nvim"
+windows = ["build", "agent"]
+
+[[wildcard]]
+pattern = "~/Documents/Projects/ResBos2/resbos2/*"
+startup_command = "~/.config/sesh/add-panes.sh; nvim"
+windows = ["build", "agent"]
+
+[[wildcard]]
+pattern = "~/Documents/Projects/sherpa/*"
+startup_command = "~/.config/sesh/add-panes.sh; nvim"
+windows = ["build", "agent"]
+
+# --- Analysis: nvim on top, Python and a shell below --------------------------
+
+[[wildcard]]
+pattern = "~/Documents/Projects/NeutrinoGenerator/Analyses"
+startup_command = "~/.config/sesh/add-panes.sh python; nvim"
+windows = ["plots"]
+
+[[wildcard]]
+pattern = "~/Documents/Projects/NeutrinoGenerator/Analyses/*"
+startup_command = "~/.config/sesh/add-panes.sh python; nvim"
+windows = ["plots"]
+
+[[wildcard]]
+pattern = "~/Documents/Projects/Analyses/*"
+startup_command = "~/.config/sesh/add-panes.sh python; nvim"
+windows = ["plots"]
+
+[[wildcard]]
+pattern = "~/Documents/Projects/MinveraOpenData"
+startup_command = "~/.config/sesh/add-panes.sh python; nvim"
+windows = ["plots"]
+
+# --- Writing: nvim with a shell below (vimtex handles compiling) --------------
+
+[[wildcard]]
+pattern = "~/Documents/Talks"
+startup_command = "~/.config/sesh/add-panes.sh; nvim"
+
+[[wildcard]]
+pattern = "~/Documents/Talks/*"
+startup_command = "~/.config/sesh/add-panes.sh; nvim"
+
+# --- Named sessions -----------------------------------------------------------
+
+[[session]]
+name = "arxiv"
+path = "~"
+startup_command = "arxiv-tui"
+
+[[session]]
+name = "faculty"
+path = "~/Documents/Faculty"
+
 [[session]]
 name = "Monitoring"
 path = "~"
@@ -22,3 +97,4 @@ startup_command = "nvim + journal.md"
 [[session]]
 name = "dotfiles"
 path = "~/.dotfiles"
+startup_command = "~/.config/sesh/add-panes.sh; nvim"

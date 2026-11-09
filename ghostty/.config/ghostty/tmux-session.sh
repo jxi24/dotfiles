@@ -4,9 +4,18 @@
 # The first window attaches to the home session. Later windows get their own
 # session so they don't mirror the first one.
 
+home_session=${HOME##*/}
+
+# Ghostty runs each window in a systemd scope that is torn down when the window
+# closes, taking any process inside it along. Start the server in a scope of
+# its own so tmux survives quitting Ghostty.
+if ! tmux has-session 2>/dev/null; then
+    systemd-run --user --scope --quiet --collect \
+        tmux new-session -d -s "$home_session" -c "$HOME"
+fi
+
 if [[ -z $(tmux list-clients 2>/dev/null) ]]; then
-    sesh connect ~ || exec tmux new-session -A -s main
-    exit
+    exec tmux new-session -A -s "$home_session" -c "$HOME"
 fi
 
 # Closing a window leaves its session running in tmux. Reuse one left behind by
