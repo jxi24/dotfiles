@@ -6,7 +6,8 @@
 # branch starts from the latest default branch on origin. An existing worktree
 # is opened as it is.
 
-CMAKE_CMD='cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_EXPORT_COMPILE_COMMANDS=ON'
+# CMake 4 rejects dependencies that ask for a minimum below 3.5 without the policy option.
+CMAKE_CMD='cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_POLICY_VERSION_MINIMUM=3.5'
 
 die() {
     tmux display-message -d 5000 "new worktree: $1"
