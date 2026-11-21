@@ -1,0 +1,20 @@
+#!/bin/bash
+# Your SLURM queue and the last day's finished jobs, refreshed every 30 seconds.
+# Bound to leader Q in tmux.
+#   slurm-status [ssh host]     default host: hpcc-dev
+
+host=${1:-${SLURM_WATCH_HOST:-hpcc-dev}}
+
+while true; do
+    clear
+    printf 'SLURM on %s, %s\n\n' "$host" "$(date +%H:%M:%S)"
+    ssh -n -o BatchMode=yes -o ConnectTimeout=20 "$host" '
+        squeue --me -o "%.12i %.24j %.9T %.10M %.10l %.5D %.20R"
+        echo
+        echo "Finished in the last 24 hours:"
+        sacct -X -S now-1days -s CD,F,CA,TO,OOM,NF,PR -o JobID%12,JobName%24,State%14,Elapsed%10,ExitCode%8
+    ' 2>&1 | grep -v -E 'post-quantum|store now|pq.html' || echo "Couldn't reach $host."
+    echo
+    read -rsn1 -t 30 -p "r: refresh   q: close" key
+    [[ $key == [qQ] || $key == $'\e' ]] && exit 0
+done

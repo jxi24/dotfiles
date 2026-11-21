@@ -1,0 +1,95 @@
+#!/bin/bash
+# Watch your SLURM jobs on a cluster and send desktop notifications when they
+# start and finish. Also writes a short summary for the tmux status bar.
+# Runs as the slurm-watch user service; see slurm-watch.service.
+#
+#   slurm-watch [ssh host]       default host: hpcc-dev
+#   SLURM_WATCH_INTERVAL=60      seconds between checks
+#
+# Each check is one squeue over the shared ssh connection. A job that leaves
+# the queue is looked up once with sacct to report how it ended. A job that
+# is submitted and finishes entirely between two checks is not seen.
+
+host=${1:-${SLURM_WATCH_HOST:-hpcc-dev}}
+interval=${SLURM_WATCH_INTERVAL:-60}
+cache=${XDG_CACHE_HOME:-$HOME/.cache}/slurm-watch
+summary=$cache/summary
+mkdir -p "$cache"
+: >"$summary"
+
+declare -A state name # last seen state and name of each job
+first=true
+
+remote() { ssh -n -o BatchMode=yes -o ConnectTimeout=20 "$host" "$@" 2>/dev/null; }
+
+# notify <urgency> <title> <lines...>: one notification, at most 6 lines.
+notify() {
+    local urgency=$1 title=$2 body
+    shift 2
+    body=$(printf '%s\n' "$@" | head -6)
+    (($# > 6)) && body+=$'\n'"and $(($# - 6)) more"
+    notify-send -a SLURM -u "$urgency" "$title" "$body"
+}
+
+while true; do
+    if out=$(remote 'squeue --me -h -o "%i|%j|%T"'); then
+        declare -A now=()
+        started=() running=0 pending=0
+        while IFS='|' read -r id jname st; do
+            [[ -n $id ]] || continue
+            case $st in
+            RUNNING) ((running++)) ;;
+            PENDING) ((pending++)) ;;
+            esac
+            # "123_[4-9]" is the not-yet-started part of an array. It shrinks as
+            # tasks start, so it is counted but not tracked as a job.
+            [[ $id == *'['* ]] && continue
+            now[$id]=$st
+            name[$id]=$jname
+            [[ $first == false && $st == RUNNING && ${state[$id]} != RUNNING ]] &&
+                started+=("$jname ($id)")
+        done <<<"$out"
+
+        ended=()
+        for id in "${!state[@]}"; do
+            [[ -z ${now[$id]} ]] && ended+=("$id")
+        done
+
+        ((${#started[@]})) && notify normal "SLURM: ${#started[@]} job(s) started" "${started[@]}"
+
+        if ((${#ended[@]})); then
+            declare -A how=()
+            while IFS='|' read -r id st elapsed code; do
+                [[ -n $id ]] && how[$id]="$st|$elapsed|$code"
+            done < <(remote "sacct -X -n -P -j $(IFS=,; echo "${ended[*]}") -o JobID,State,Elapsed,ExitCode")
+            ok=() bad=()
+            for id in "${ended[@]}"; do
+                IFS='|' read -r st elapsed code <<<"${how[$id]}"
+                line="${name[$id]} ($id)"
+                if [[ -z $st ]]; then
+                    ok+=("$line: left the queue")
+                elif [[ $st == COMPLETED ]]; then
+                    ok+=("$line: completed in $elapsed")
+                else
+                    bad+=("$line: ${st%% *} after $elapsed, exit $code")
+                fi
+                unset "name[$id]"
+            done
+            ((${#ok[@]})) && notify normal "SLURM: ${#ok[@]} job(s) finished" "${ok[@]}"
+            ((${#bad[@]})) && notify critical "SLURM: ${#bad[@]} job(s) failed" "${bad[@]}"
+        fi
+
+        state=()
+        for id in "${!now[@]}"; do state[$id]=${now[$id]}; done
+        first=false
+
+        line=""
+        ((running)) && line+="R$running "
+        ((pending)) && line+="Q$pending "
+        printf '%s' "$line" >"$summary"
+    else
+        # Offline or the cluster is unreachable: hide the count, keep the state.
+        : >"$summary"
+    fi
+    sleep "$interval"
+done

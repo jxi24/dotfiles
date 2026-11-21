@@ -13,6 +13,7 @@ directory is a package whose contents mirror `$HOME`.
 | `sesh`     | sesh project layouts |
 | `starship` | prompt |
 | `atuin`    | shell history |
+| `slurm`    | SLURM job notifications and queue viewer for the ICER cluster |
 | `wezterm`  | old terminal config, no longer used |
 
 ## New machine
@@ -33,7 +34,8 @@ directory is a package whose contents mirror `$HOME`.
    ```bash
    git clone https://github.com/jxi24/dotfiles ~/.dotfiles
    cd ~/.dotfiles
-   stow bash git nvim ghostty tmux sesh starship atuin
+   stow bash git nvim ghostty tmux sesh starship atuin slurm
+   systemctl --user enable --now slurm-watch   # SLURM notifications
    ```
 
 3. Add your git identity, which is kept out of the repo:
@@ -64,9 +66,30 @@ The tmux leader is `Ctrl-a`.
 | `leader n`   | new worktree from a branch name, with the default cmake configure |
 | `leader N`   | new worktree from a GitHub issue or PR |
 | `leader t`   | new talk folder in `~/Documents/Talks` |
+| `leader D`   | list worktrees by last commit and remove finished ones |
+| `leader Q`   | SLURM queue and the last day's finished jobs on ICER |
 | `leader W` / `leader R` | save / restore all sessions (also automatic every 15 minutes) |
 | `leader r`   | reload tmux.conf |
 
 `leader n` and `leader N` need repos cloned with `git clone-worktree <url>`,
 which puts the git data in `.bare` with one directory per worktree beside it.
 Layouts for each kind of project are in `sesh/.config/sesh/sesh.toml`.
+
+## ICER cluster
+
+The `icer` entry in the project picker attaches to a tmux session on the dev
+node (`hpcc-dev` in `~/.ssh/config`, which is kept out of this repo) and
+reconnects if the connection drops. That tmux uses prefix `Ctrl-b` and a bottom
+status bar; `Ctrl-h/j/k/l` pass through to it. The `slurm-watch` service sends a
+desktop notification when jobs start and finish, and the top bar shows running
+(R) and queued (Q) counts.
+
+One-time setup on the cluster, after installing Neovim into `~/.local/bin`:
+
+```bash
+git clone https://github.com/jxi24/dotfiles ~/.dotfiles
+ln -s ~/.dotfiles/nvim/.config/nvim ~/.config/nvim
+mkdir -p ~/.config/tmux && ln -s ~/.dotfiles/tmux/.config/tmux/remote.conf ~/.config/tmux/tmux.conf
+nvim --headless "+Lazy! sync" +qa
+nvim --headless -c "MasonInstall clangd neocmakelsp lua-language-server ruff rust-analyzer fortitude fortls debugpy" -c qa
+```
