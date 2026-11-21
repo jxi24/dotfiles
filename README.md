@@ -106,21 +106,31 @@ cd ~/.dotfiles && git checkout -- nvim/.config/nvim/lazy-lock.json && git pull
 
 ### Achilles pipeline
 
-Achilles lives at `~/Achilles` on the cluster (`.bare` plus worktrees). Build
-in a worktree with `source ~/.dotfiles/hpc/achilles-env.sh`, then:
+Achilles lives at `~/Achilles` on the cluster (`.bare` plus worktrees). From a
+local Achilles worktree on the laptop:
 
 ```bash
-achilles-submit -n 20 -a 'python3 ~/analysis/plots.py $EVENT_FILES' run.yml
+icer-submit -n 20 -a 'python3 ~/analysis/plots.py $EVENT_FILES' run.yml
 ```
 
-This splits `NEvents` over a 20-task SLURM array, each task in its own folder
-under `$SCRATCH/achilles/<date>-<card>/` with its own seed, then runs the
-analysis job once every task succeeds. Analysis writes to `plots/`. When it
-finishes, `slurm-watch` on the laptop copies `plots/`, the run card and
-`provenance.txt` (commit, build time, options) to
+This checks the branch's commit is on GitHub (offering to push), brings the
+cluster worktree of the same name to that commit, builds it as a SLURM job if
+needed, and submits the run to start after the build. On the cluster itself,
+the same steps are `achilles-build` (prints a job id, or `up-to-date`) and
+`achilles-submit -d <build job> ...`. Builds run as jobs because dev nodes stop
+anything past 2 CPU-hours.
+
+A run lives in `$SCRATCH/achilles/<date>-<card>/`. One job integrates once;
+then `NEvents` is split over a 20-task SLURM array, each task in its own folder
+with its own seed and its own copy of the integration cache; then the analysis
+job runs once every task succeeds (if anything fails, the jobs after it are
+cancelled and you get a failure notification). Analysis writes to `plots/`.
+When it finishes, `slurm-watch` on the laptop copies `plots/`, the run card,
+`provenance.txt` (commit, build time, options) and `changes.patch` (any
+uncommitted changes on the cluster) to
 `~/Documents/Projects/NeutrinoGenerator/AchillesRuns/`; event files stay in
 scratch. `icer-fetch-plots [run id]` copies by hand. `achilles-submit -h`
-lists options; it asks for the SLURM account when you have more than one.
+lists options; the account is asked for when you have more than one.
 
 To develop an analysis, generate events without `-a`, then run
 `icer-notebook [run id]` on the laptop. It starts JupyterLab as a SLURM job on

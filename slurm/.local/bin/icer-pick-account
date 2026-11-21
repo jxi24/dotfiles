@@ -1,0 +1,12 @@
+#!/bin/bash
+# Print the SLURM account to use on the cluster: the only one you have, or ask
+# (on the terminal) when you have several. Used by icer-notebook and icer-submit.
+host=${ICER_HOST:-hpcc-dev}
+mapfile -t accounts < <(ssh -n "$host" 'sacctmgr -nP show assoc user=$USER format=account' | sort -u | grep .)
+if ((${#accounts[@]} == 1)); then
+    echo "${accounts[0]}"
+elif ((${#accounts[@]} > 1)); then
+    PS3="Which SLURM account? "
+    select account in "${accounts[@]}"; do [[ -n $account ]] && break; done </dev/tty 2>/dev/tty
+    echo "$account"
+fi

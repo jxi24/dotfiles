@@ -12,16 +12,20 @@
 #     -t TIME     time limit per task (default 04:00:00)
 #     -m MEM      memory per task (default 4G)
 #     -s SEED     base seed; task i uses SEED + i (default 1000)
+#     -d JOB      start only after job JOB succeeds, e.g. the id achilles-build printed
+#     -I          integrate in every task instead of once up front
 #
-# Each run gets $SCRATCH/achilles/<date>-<card>/ with one task-NNN/ directory
-# per array task, so tasks never share an integration cache (issue #189).
+# Each run gets $SCRATCH/achilles/<date>-<card>/. A first job integrates once
+# in integrate/; then each array task copies that cache into its own task-NNN/
+# directory, so tasks skip the integration but never share a cache (issue
+# #189). Uncommitted changes in the worktree are saved as changes.patch.
 # Scratch is purged after a while: plots are what you keep. The laptop's
 # slurm-watch copies plots/ home when the analysis job finishes.
 
 set -euo pipefail
 
-tasks=10 analysis="" account="" partition="" time=04:00:00 mem=4G seed=1000
-while getopts "n:a:A:p:t:m:s:h" opt; do
+tasks=10 analysis="" account="" partition="" time=04:00:00 mem=4G seed=1000 after="" integrate=true
+while getopts "n:a:A:p:t:m:s:d:Ih" opt; do
     case $opt in
     n) tasks=$OPTARG ;;
     a) analysis=$OPTARG ;;
@@ -30,7 +34,9 @@ while getopts "n:a:A:p:t:m:s:h" opt; do
     t) time=$OPTARG ;;
     m) mem=$OPTARG ;;
     s) seed=$OPTARG ;;
-    *) sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
+    d) after=$OPTARG ;;
+    I) integrate=false ;;
+    *) sed -n '2,24p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
     esac
 done
 shift $((OPTIND - 1))
@@ -40,7 +46,7 @@ card=$(realpath "$card")
 
 worktree=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "Run this inside an Achilles worktree."; exit 1; }
 binary=$worktree/build/bin/achilles
-[[ -x $binary ]] || { echo "No build at $binary. Build it first."; exit 1; }
+[[ -x $binary || -n $after ]] || { echo "No build at $binary. Run achilles-build first."; exit 1; }
 [[ -n ${SCRATCH:-} ]] || { echo "\$SCRATCH isn't set."; exit 1; }
 
 # Account: use -A, the only one you have, or ask.
@@ -56,11 +62,16 @@ cp "$card" "$run/run.yml"
     echo "card:     $card"
     echo "worktree: $worktree"
     echo "commit:   $(git -C "$worktree" rev-parse HEAD)"
-    git -C "$worktree" diff --quiet HEAD || echo "WARNING:  the worktree had uncommitted changes"
-    echo "binary:   $binary (built $(date -r "$binary" '+%F %T'))"
+    git -C "$worktree" diff --quiet HEAD || echo "changes:  uncommitted changes, saved in changes.patch"
+    if [[ -n $after ]]; then
+        echo "binary:   $binary (built by job $after)"
+    else
+        echo "binary:   $binary (built $(date -r "$binary" '+%F %T'))"
+    fi
     echo "tasks:    $tasks, base seed $seed, account ${account:-default}"
     echo "analysis: ${analysis:-none}"
 } >"$run/provenance.txt"
+git -C "$worktree" diff --quiet HEAD || git -C "$worktree" diff HEAD >"$run/changes.patch"
 
 # One run card per task: its share of NEvents and its own seed. The seed lives
 # in the Options file the card includes, so each task gets a local copy of it.
@@ -102,19 +113,53 @@ for i in range(1, tasks + 1):
     else:
         t += "\nOptions:\n  Initialize:\n    Seed: %d\n" % (seed + i)
     open(os.path.join(task, "run.yml"), "w").write(t)
+
+# The integration job: the first task's card with a single event.
+os.makedirs(os.path.join(run, "integrate"))
+for name in os.listdir(os.path.join(run, "task-001")):
+    t = open(os.path.join(run, "task-001", name)).read()
+    if name == "run.yml":
+        t = re.sub(r'^(\s*NEvents:\s*)\d+', lambda s: s.group(1) + "1", t, count=1, flags=re.M)
+    open(os.path.join(run, "integrate", name), "w").write(t)
 print("%d tasks of %d events each" % (tasks, per_task))
 EOF
 
-common=(--parsable --time="$time" --mem="$mem" --cpus-per-task=1)
+# --kill-on-invalid-dep: when a job this depends on fails, SLURM cancels this
+# one instead of leaving it pending forever.
+common=(--parsable --time="$time" --mem="$mem" --cpus-per-task=1 --kill-on-invalid-dep=yes)
 [[ -n $account ]] && common+=(--account="$account")
 [[ -n $partition ]] && common+=(--partition="$partition")
 
-events=$(sbatch "${common[@]}" --job-name="ach-$run_id" --array="1-$tasks" \
+dep=()
+[[ -n $after ]] && dep=(--dependency="afterok:$after")
+
+if $integrate; then
+    integ=$(sbatch "${common[@]}" "${dep[@]}" --job-name="int-$run_id" \
+        --output="$run/logs/integrate.out" <<EOF
+#!/bin/bash -l
+source ~/.dotfiles/hpc/achilles-env.sh
+cd "$run/integrate"
+export ACHILLES_PATH="$worktree"
+"$binary" -b run.yml
+[[ -n "$after" ]] && echo "built:    \$(date -r "$binary" '+%F %T')" >> ../provenance.txt
+if [[ -z \$(ls -A .achilles 2>/dev/null) ]]; then
+    echo "The integration wrote no cache; see achilles.log"
+    exit 1
+fi
+EOF
+)
+    echo "Integration: job $integ"
+    dep=(--dependency="afterok:$integ")
+fi
+
+events=$(sbatch "${common[@]}" "${dep[@]}" --job-name="ach-$run_id" --array="1-$tasks" \
     --output="$run/logs/task-%a.out" <<EOF
 #!/bin/bash -l
 source ~/.dotfiles/hpc/achilles-env.sh
 cd "$run/task-\$(printf %03d \$SLURM_ARRAY_TASK_ID)"
 export ACHILLES_PATH="$worktree"
+# Start from the shared integration, in a copy of its own (issue #189).
+[[ -d ../integrate/.achilles ]] && cp -r ../integrate/.achilles .
 "$binary" -b run.yml
 # Achilles exits 0 even when the run fails, so check that it wrote events.
 status=\$?

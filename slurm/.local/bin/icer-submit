@@ -1,0 +1,110 @@
+#!/bin/bash
+# Submit an Achilles run on the ICER cluster from the laptop, using the
+# branch of the worktree you're in. Run it inside a local Achilles worktree:
+#
+#   icer-submit [achilles-submit options] <run card>
+#   e.g.  icer-submit -n 20 -a 'run-notebook ~/analysis/xsec.ipynb' run.yml
+#
+# It makes sure the branch's commit is on GitHub (offering to push it), then
+# on the cluster: fetches it into a worktree of the same name in ~/Achilles
+# (creating it if needed), builds it as a SLURM job when the build is out of
+# date (achilles-build), and submits the run to start once the build
+# succeeds (achilles-submit -d). Uncommitted local changes aren't sent, so it
+# stops if there are any; commit them first, or pass -f to run without them.
+#
+# The run card is taken from the cluster's worktree when it's committed there
+# unchanged, and copied over otherwise.
+
+host=${ICER_HOST:-hpcc-dev}
+hpc=${ICER_HPC_DIR:-'~/.dotfiles/hpc'} # the cluster's copy of hpc/
+q() { (($#)) && printf '%q ' "$@"; }
+remote() { ssh -n "$host" "bash -lc $(q "$1")"; }
+
+force=false
+[[ $1 == -f ]] && { force=true; shift; }
+(($#)) || { sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'; exit 1; }
+args=("${@:1:$#-1}")
+card=${!#}
+
+top=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "Run this inside an Achilles worktree."; exit 1; }
+[[ -f $card ]] || { echo "No run card at $card"; exit 1; }
+card=$(realpath "$card")
+branch=$(git branch --show-current)
+[[ -n $branch ]] || { echo "This worktree isn't on a branch."; exit 1; }
+name=$(basename "$top")
+head=$(git rev-parse HEAD)
+
+if ! git diff --quiet HEAD; then
+    if $force; then
+        echo "Running without your uncommitted changes (-f)."
+    else
+        echo "This worktree has uncommitted changes, which won't reach the cluster."
+        echo "Commit them first, or pass -f to run the last commit without them."
+        exit 1
+    fi
+fi
+
+# The cluster fetches from GitHub, so the commit has to be there.
+git fetch -q origin "$branch" 2>/dev/null
+if ! git merge-base --is-ancestor HEAD "origin/$branch" 2>/dev/null; then
+    read -rp "Push $branch to origin first? [y/N] " yes
+    [[ $yes == [yY]* ]] || exit 1
+    git push -u origin "$branch" || exit 1
+fi
+
+# Ask for the account here, once, for both the build and the run.
+if [[ " ${args[*]} " != *" -A "* ]]; then
+    account=$(icer-pick-account)
+    [[ -n $account ]] && args=(-A "$account" "${args[@]}")
+fi
+account_arg=()
+for ((i = 0; i < ${#args[@]}; i++)); do
+    [[ ${args[i]} == -A ]] && account_arg=(-A "${args[i + 1]}")
+done
+
+# The cluster worktree: create it, or fast-forward it to this commit.
+echo "Updating ~/Achilles/$name on the cluster..."
+remote "set -e
+cd ~/Achilles
+git fetch -q origin $(q "$branch")
+if [[ -d $(q "$name") ]]; then
+    cd $(q "$name")
+    [[ \$(git branch --show-current) == $(q "$branch") ]] || { echo \"~/Achilles/$name is on branch \$(git branch --show-current), not $branch.\"; exit 1; }
+    git diff --quiet HEAD || { echo \"~/Achilles/$name has uncommitted changes; leaving it alone.\"; exit 1; }
+    git merge -q --ff-only $head
+else
+    if git show-ref -q --verify refs/heads/$(q "$branch"); then
+        git worktree add -q $(q "$name") $(q "$branch")
+        git -C $(q "$name") merge -q --ff-only $head
+    else
+        git worktree add -q -b $(q "$branch") $(q "$name") origin/$(q "$branch")
+        git -C $(q "$name") merge -q --ff-only $head
+    fi
+fi
+at=\$(git -C ~/Achilles/$(q "$name") rev-parse HEAD)
+if [[ \$at != $head ]]; then
+    echo \"~/Achilles/$name is at \${at:0:8}, ahead of your commit ${head:0:8}. Pull locally, or run there.\"
+    exit 1
+fi" || exit 1
+
+# The run card: the cluster's copy if it's committed and unchanged, otherwise a copy.
+rel=${card#"$top"/}
+if [[ $rel != "$card" ]] && git ls-files --error-unmatch "$rel" >/dev/null 2>&1 && git diff --quiet HEAD -- "$rel"; then
+    remote_card="~/Achilles/$name/$rel"
+else
+    # achilles-submit copies the card into the run folder, so this copy is only
+    # needed until then.
+    ssh -n "$host" 'mkdir -p ~/.cache/achilles-cards' &&
+        scp -q "$card" "$host:.cache/achilles-cards/" || exit 1
+    remote_card="~/.cache/achilles-cards/$(q "$(basename "$card")")"
+fi
+
+build=$(remote "cd ~/Achilles/$(q "$name") && $hpc/achilles-build $(q "${account_arg[@]}")" | tail -1)
+case $build in
+up-to-date) echo "The cluster build is up to date."; after=() ;;
+[0-9]*) echo "Building as job $build (log: ~/Achilles/$name/build/build.log)."; after=(-d "$build") ;;
+*) echo "The build couldn't start: $build"; exit 1 ;;
+esac
+
+remote "cd ~/Achilles/$(q "$name") && $hpc/achilles-submit $(q "${after[@]}" "${args[@]}") $remote_card" &&
+    systemctl --user kill -s USR1 slurm-watch.service 2>/dev/null

@@ -12,17 +12,13 @@
 #   achilles-submit -a 'run-notebook ~/analysis/<name>.ipynb' run.yml
 
 host=${ICER_HOST:-hpcc-dev}
-q() { printf '%q ' "$@"; }
+q() { (($#)) && printf '%q ' "$@"; }
 
 # Ask for the account here when -A isn't given and you have several.
 args=("$@")
 if [[ " $* " != *" -A"* ]]; then
-    mapfile -t accounts < <(ssh -n "$host" 'sacctmgr -nP show assoc user=$USER format=account' | sort -u | grep .)
-    if ((${#accounts[@]} > 1)); then
-        PS3="Which SLURM account? "
-        select account in "${accounts[@]}"; do [[ -n $account ]] && break; done
-        args=(-A "$account" "${args[@]}")
-    fi
+    account=$(icer-pick-account)
+    [[ -n $account ]] && args=(-A "$account" "${args[@]}")
 fi
 hpc=${ICER_HPC_DIR:-'~/.dotfiles/hpc'}
 job=$(ssh -n "$host" "bash -lc $(q "$hpc/achilles-notebook $(q "${args[@]}")")" | tail -1)

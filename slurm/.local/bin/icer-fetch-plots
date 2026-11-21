@@ -1,6 +1,6 @@
 #!/bin/bash
 # Copy Achilles run results from ICER scratch to the laptop: plots/, the run
-# card and provenance.txt. Event files stay on the cluster.
+# card, provenance.txt and changes.patch (if any). Event files stay on the cluster.
 #   icer-fetch-plots <run id>    one run, e.g. 20261121-101500-run
 #   icer-fetch-plots             every run still in scratch
 # Called by slurm-on-finish when a run's analysis job completes.
@@ -20,6 +20,6 @@ fi
 mkdir -p "$to"
 # The transfer gateway (hpcc-rsync) can see scratch; the login gateway can't.
 rsync -a --prune-empty-dirs \
-    --include="$top" --include="${top}plots/***" --include="${top}run.yml" --include="${top}provenance.txt" \
+    --include="$top" --include="${top}plots/***" --include="${top}run.yml" --include="${top}provenance.txt" --include="${top}changes.patch" \
     --exclude='*' "hpcc-rsync:$src" "$to" || exit 1
 echo "Copied to $to"

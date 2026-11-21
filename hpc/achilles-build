@@ -1,0 +1,60 @@
+#!/bin/bash
+# Build the Achilles worktree you're in as a SLURM job, so compiling doesn't
+# run into the dev nodes' 2 CPU-hour limit. Prints the job id; the job's
+# output goes to build/build.log. Pass the id to achilles-submit -d to start a
+# run once the build succeeds.
+#
+#   achilles-build [-A account] [-c cpus (16)] [-t time (01:00:00)] [-m mem (16G)]
+#
+# CMake configures on the dev node, since CPM downloads dependencies then and
+# configuring is light. A successful build records its commit in
+# build/.built-commit; when that matches HEAD and nothing has changed, there's
+# nothing to build and this prints "up-to-date" instead of a job id.
+
+set -euo pipefail
+account="" cpus=16 time=01:00:00 mem=16G
+while getopts "A:c:t:m:h" opt; do
+    case $opt in
+    A) account=$OPTARG ;; c) cpus=$OPTARG ;; t) time=$OPTARG ;; m) mem=$OPTARG ;;
+    *) sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
+    esac
+done
+
+worktree=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "Run this inside an Achilles worktree." >&2; exit 1; }
+build=$worktree/build
+# A build with uncommitted changes is recorded as <commit>-dirty, so it never
+# counts as up to date.
+head=$(git -C "$worktree" rev-parse HEAD)
+git -C "$worktree" diff --quiet HEAD || head+=-dirty
+if [[ -x $build/bin/achilles && $(cat "$build/.built-commit" 2>/dev/null) == "$head" ]]; then
+    echo up-to-date
+    exit 0
+fi
+
+set +u # module scripts use unset variables
+source ~/.dotfiles/hpc/achilles-env.sh >/dev/null 2>&1
+set -u
+if [[ ! -f $build/CMakeCache.txt ]]; then
+    echo "Configuring $worktree" >&2
+    mkdir -p "$build"
+    cmake -S "$worktree" -B "$build" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+        -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DACHILLES_ENABLE_ROOT=ON >"$build/configure.log" 2>&1 ||
+        { echo "CMake failed; see $build/configure.log" >&2; exit 1; }
+fi
+
+[[ -n $account ]] || account=$(~/.dotfiles/hpc/pick-account)
+args=(--parsable --job-name="build-$(basename "$worktree")" --time="$time" --cpus-per-task="$cpus"
+      --mem="$mem" --output="$build/build.log")
+[[ -n $account ]] && args+=(--account="$account")
+
+job=$(sbatch "${args[@]}" <<EOF
+#!/bin/bash -l
+set -e
+source ~/.dotfiles/hpc/achilles-env.sh
+rm -f "$build/.built-commit"
+cmake --build "$build" -j "\$SLURM_CPUS_PER_TASK"
+echo "$head" > "$build/.built-commit"
+EOF
+)
+~/.dotfiles/hpc/slurm-wake
+echo "$job"
