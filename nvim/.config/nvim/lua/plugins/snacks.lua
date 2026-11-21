@@ -65,6 +65,7 @@ return {
             -- cite papers (lua/cite.lua): vault paper notes, or an INSPIRE search
             { "<leader>sr", function() require("cite").vault_pick() end, desc = "Cite a paper (vault)" },
             { "<leader>sI", function() require("cite").inspire_pick() end, desc = "Cite a paper (INSPIRE)" },
+        { "<leader>sP", function() require("talk_search").pick() end, desc = "Search past talks (slide text)" },
             { "<M-r>", function() require("cite").vault_pick() end, mode = "i", desc = "Cite a paper (vault)" },
             -- LSP
             { "<leader>ld", function() Snacks.picker.lsp_definitions() end, desc = "Goto Definition" },
