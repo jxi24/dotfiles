@@ -39,6 +39,14 @@ alias fixcam='sudo usbreset 0c45:6d24 2>/dev/null || (CAM_BUS=$(grep -l -i "webc
 export PATH="$HOME/.local/bin:$HOME/.amp/bin:$PATH"   # .amp/bin: Amp CLI
 export EDITOR=nvim
 
+# C++ builds (see build/ in the dotfiles): Ninja by default, with memory caps
+# and lld from defaults.cmake; ccache shared across worktrees; CPM downloads
+# shared across build directories.
+export CMAKE_GENERATOR=Ninja
+export CMAKE_TOOLCHAIN_FILE="$HOME/.config/cmake/defaults.cmake"
+export CCACHE_BASEDIR="$HOME"
+export CPM_SOURCE_CACHE="$HOME/.cache/CPM"
+
 #export PYTHONPATH=$PYTHONPATH:$HOME/.local/lib/python3.13/site-packages/
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/.local/lib
 
