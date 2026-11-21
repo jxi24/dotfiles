@@ -1,0 +1,26 @@
+[credential "https://github.com"]
+	helper = 
+	helper = !/usr/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper = 
+    helper = !/usr/bin/gh auth git-credential
+[alias]
+    clone-worktree = "!sh $HOME/.local/bin/git-clone-worktree.sh"
+[credential "https://gitlab.com"]
+	helper = 
+	helper = !/usr/bin/glab auth git-credential
+[init]
+    defaultBranch = main
+[core]
+    pager = delta
+[interactive]
+    deltaFilter = delta --color-only
+[delta]
+    navigate = true
+    dark = true
+    side-by-side = true
+    line-numbers = true
+[merge]
+    conflictStyle = zdiff3
+[include]
+    path = ~/.gitconfig.local   # [user] name and email, not tracked
