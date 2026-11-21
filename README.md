@@ -93,3 +93,13 @@ mkdir -p ~/.config/tmux && ln -s ~/.dotfiles/tmux/.config/tmux/remote.conf ~/.co
 nvim --headless "+Lazy! sync" +qa
 nvim --headless -c "MasonInstall clangd neocmakelsp lua-language-server ruff rust-analyzer fortitude fortls debugpy" -c qa
 ```
+
+To update the cluster's copy later. The lock file always shows as changed there,
+because the cluster skips papis.nvim and its two dependencies:
+
+```bash
+cd ~/.dotfiles && git checkout -- nvim/.config/nvim/lazy-lock.json && git pull
+```
+
+ICER's acceptable use rules count frequent squeue/sacct calls as overuse, so
+`slurm-watch` checks every 2 minutes while you have jobs and every 10 otherwise.

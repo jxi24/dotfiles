@@ -4,14 +4,22 @@
 # Runs as the slurm-watch user service; see slurm-watch.service.
 #
 #   slurm-watch [ssh host]       default host: hpcc-dev
-#   SLURM_WATCH_INTERVAL=60      seconds between checks
+#   SLURM_WATCH_ACTIVE=120       seconds between checks while you have jobs
+#   SLURM_WATCH_IDLE=600         seconds between checks when you have none
+#
+# ICER's acceptable use rules count calling squeue/sacct "on a short interval"
+# as overuse, so this checks every 2 minutes at most, and every 10 when idle.
+# Send SIGUSR1 to check right away, e.g. after submitting a job:
+#   systemctl --user kill -s USR1 slurm-watch
 #
 # Each check is one squeue over the shared ssh connection. A job that leaves
 # the queue is looked up once with sacct to report how it ended. A job that
 # is submitted and finishes entirely between two checks is not seen.
 
 host=${1:-${SLURM_WATCH_HOST:-hpcc-dev}}
-interval=${SLURM_WATCH_INTERVAL:-60}
+active=${SLURM_WATCH_ACTIVE:-120}
+idle=${SLURM_WATCH_IDLE:-600}
+trap : USR1 # interrupts the wait below
 cache=${XDG_CACHE_HOME:-$HOME/.cache}/slurm-watch
 summary=$cache/summary
 mkdir -p "$cache"
@@ -91,5 +99,8 @@ while true; do
         # Offline or the cluster is unreachable: hide the count, keep the state.
         : >"$summary"
     fi
-    sleep "$interval"
+    if ((${#state[@]})) || [[ -n $(cat "$summary") ]]; then interval=$active; else interval=$idle; fi
+    sleep "$interval" &
+    wait $!
+    kill $! 2>/dev/null
 done
