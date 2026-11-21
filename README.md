@@ -14,6 +14,7 @@ directory is a package whose contents mirror `$HOME`.
 | `starship` | prompt |
 | `atuin`    | shell history |
 | `slurm`    | SLURM job notifications and queue viewer for the ICER cluster |
+| `hpc`      | scripts used on the cluster itself (not stowed): Achilles modules and job submission |
 | `wezterm`  | old terminal config, no longer used |
 
 ## New machine
@@ -100,6 +101,24 @@ because the cluster skips papis.nvim and its two dependencies:
 ```bash
 cd ~/.dotfiles && git checkout -- nvim/.config/nvim/lazy-lock.json && git pull
 ```
+
+### Achilles pipeline
+
+On the cluster (one-time: `ln -s ~/.dotfiles/hpc/achilles-submit ~/.local/bin/`),
+build in a worktree with `source ~/.dotfiles/hpc/achilles-env.sh`, then:
+
+```bash
+achilles-submit -n 20 -a 'python3 ~/analysis/plots.py $EVENT_FILES' run.yml
+```
+
+This splits `NEvents` over a 20-task SLURM array, each task in its own folder
+under `$SCRATCH/achilles/<date>-<card>/` with its own seed, then runs the
+analysis job once every task succeeds. Analysis writes to `plots/`. When it
+finishes, `slurm-watch` on the laptop copies `plots/`, the run card and
+`provenance.txt` (commit, build time, options) to
+`~/Documents/Projects/NeutrinoGenerator/AchillesRuns/`; event files stay in
+scratch. `icer-fetch-plots [run id]` copies by hand. `achilles-submit -h`
+lists options; it asks for the SLURM account when you have more than one.
 
 ICER's acceptable use rules count frequent squeue/sacct calls as overuse, so
 `slurm-watch` checks every 2 minutes while you have jobs and every 10 otherwise.

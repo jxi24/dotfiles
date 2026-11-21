@@ -1,0 +1,25 @@
+#!/bin/bash
+# Copy Achilles run results from ICER scratch to the laptop: plots/, the run
+# card and provenance.txt. Event files stay on the cluster.
+#   icer-fetch-plots <run id>    one run, e.g. 20261121-101500-run
+#   icer-fetch-plots             every run still in scratch
+# Called by slurm-on-finish when a run's analysis job completes.
+
+id=${1:-}
+dest=${ICER_RUNS_DIR:-$HOME/Documents/Projects/NeutrinoGenerator/AchillesRuns}
+
+# $SCRATCH is only set in a login shell on the cluster.
+scratch=$(ssh -n -o BatchMode=yes hpcc-dev 'bash -lc "echo \$SCRATCH"' 2>/dev/null | tail -1)
+[[ $scratch == /* ]] || { echo "Couldn't read \$SCRATCH on the cluster."; exit 1; }
+
+if [[ -n $id ]]; then
+    src=$scratch/achilles/$id/ to=$dest/$id/ top=/
+else
+    src=$scratch/achilles/ to=$dest/ top=/*/
+fi
+mkdir -p "$to"
+# The transfer gateway (hpcc-rsync) can see scratch; the login gateway can't.
+rsync -a --prune-empty-dirs \
+    --include="$top" --include="${top}plots/***" --include="${top}run.yml" --include="${top}provenance.txt" \
+    --exclude='*' "hpcc-rsync:$src" "$to" || exit 1
+echo "Copied to $to"

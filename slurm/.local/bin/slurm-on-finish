@@ -1,0 +1,16 @@
+#!/bin/bash
+# Called by slurm-watch for every job that leaves the queue:
+#   slurm-on-finish <job id> <job name> <final state>
+# When an Achilles analysis job (named ana-<run id> by achilles-submit)
+# completes, copy that run's plots home and say where they are.
+
+id=$1 name=$2 state=$3
+
+if [[ $name == ana-* && $state == COMPLETED ]]; then
+    run=${name#ana-}
+    if out=$(icer-fetch-plots "$run" 2>&1); then
+        notify-send -a SLURM "Plots for $run are on the laptop" "${out#Copied to }"
+    else
+        notify-send -a SLURM -u critical "Couldn't copy the plots for $run" "${out##*$'\n'}"
+    fi
+fi

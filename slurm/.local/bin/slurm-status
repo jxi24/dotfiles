@@ -5,6 +5,9 @@
 
 host=${1:-${SLURM_WATCH_HOST:-hpcc-dev}}
 
+# Opening this also makes slurm-watch check now, instead of at its next interval.
+systemctl --user kill -s USR1 slurm-watch.service 2>/dev/null
+
 while true; do
     clear
     printf 'SLURM on %s, %s\n\n' "$host" "$(date +%H:%M:%S)"

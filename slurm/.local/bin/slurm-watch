@@ -12,6 +12,8 @@
 # Send SIGUSR1 to check right away, e.g. after submitting a job:
 #   systemctl --user kill -s USR1 slurm-watch
 #
+# Each job that leaves the queue is passed to slurm-on-finish, if installed.
+#
 # Each check is one squeue over the shared ssh connection. A job that leaves
 # the queue is looked up once with sacct to report how it ended. A job that
 # is submitted and finishes entirely between two checks is not seen.
@@ -81,6 +83,9 @@ while true; do
                 else
                     bad+=("$line: ${st%% *} after $elapsed, exit $code")
                 fi
+                # Per-job follow-up, e.g. copying plots home (slurm-on-finish).
+                command -v slurm-on-finish >/dev/null &&
+                    slurm-on-finish "$id" "${name[$id]}" "${st%% *}" >/dev/null 2>&1 &
                 unset "name[$id]"
             done
             ((${#ok[@]})) && notify normal "SLURM: ${#ok[@]} job(s) finished" "${ok[@]}"

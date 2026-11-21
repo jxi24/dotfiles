@@ -1,0 +1,142 @@
+#!/bin/bash
+# Submit an Achilles run on the ICER cluster as a SLURM job array, plus an
+# optional analysis job that starts when every event job has succeeded.
+# Run it from inside an Achilles worktree that has been built.
+#
+#   achilles-submit [options] <run card>
+#     -n N        number of array tasks (default 10); NEvents is split across them
+#     -a CMD      analysis command, run in the run directory after all tasks succeed.
+#                 $EVENT_FILES lists the event files; write plots to plots/.
+#     -A ACCOUNT  SLURM account. Without it you are asked when you have several.
+#     -p PART     partition (default: let SLURM choose)
+#     -t TIME     time limit per task (default 04:00:00)
+#     -m MEM      memory per task (default 4G)
+#     -s SEED     base seed; task i uses SEED + i (default 1000)
+#
+# Each run gets $SCRATCH/achilles/<date>-<card>/ with one task-NNN/ directory
+# per array task, so tasks never share an integration cache (issue #189).
+# Scratch is purged after a while: plots are what you keep. The laptop's
+# slurm-watch copies plots/ home when the analysis job finishes.
+
+set -euo pipefail
+
+tasks=10 analysis="" account="" partition="" time=04:00:00 mem=4G seed=1000
+while getopts "n:a:A:p:t:m:s:h" opt; do
+    case $opt in
+    n) tasks=$OPTARG ;;
+    a) analysis=$OPTARG ;;
+    A) account=$OPTARG ;;
+    p) partition=$OPTARG ;;
+    t) time=$OPTARG ;;
+    m) mem=$OPTARG ;;
+    s) seed=$OPTARG ;;
+    *) sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
+    esac
+done
+shift $((OPTIND - 1))
+card=${1:?usage: achilles-submit [options] <run card>   (-h for help)}
+[[ -f $card ]] || { echo "No run card at $card"; exit 1; }
+card=$(realpath "$card")
+
+worktree=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "Run this inside an Achilles worktree."; exit 1; }
+binary=$worktree/build/bin/achilles
+[[ -x $binary ]] || { echo "No build at $binary. Build it first."; exit 1; }
+[[ -n ${SCRATCH:-} ]] || { echo "\$SCRATCH isn't set."; exit 1; }
+
+# Account: use -A, the only one you have, or ask.
+if [[ -z $account ]]; then
+    mapfile -t accounts < <(sacctmgr -nP show assoc user="$USER" format=account | sort -u | grep .)
+    if ((${#accounts[@]} == 1)); then
+        account=${accounts[0]}
+    elif ((${#accounts[@]} > 1)); then
+        echo "Which SLURM account?"
+        select account in "${accounts[@]}"; do [[ -n $account ]] && break; done
+    fi
+fi
+
+run_id=$(date +%Y%m%d-%H%M%S)-$(basename "$card" .yml)
+run=$SCRATCH/achilles/$run_id
+mkdir -p "$run/logs" "$run/plots"
+cp "$card" "$run/run.yml"
+
+# Provenance: what code produced these events.
+{
+    echo "card:     $card"
+    echo "worktree: $worktree"
+    echo "commit:   $(git -C "$worktree" rev-parse HEAD)"
+    git -C "$worktree" diff --quiet HEAD || echo "WARNING:  the worktree had uncommitted changes"
+    echo "binary:   $binary (built $(date -r "$binary" '+%F %T'))"
+    echo "tasks:    $tasks, base seed $seed, account ${account:-default}"
+    echo "analysis: ${analysis:-none}"
+} >"$run/provenance.txt"
+
+# One run card per task: its share of NEvents and its own seed. The seed lives
+# in the Options file the card includes, so each task gets a local copy of it.
+ACHILLES_PATH=$worktree python3 - "$card" "$run" "$tasks" "$seed" <<'EOF'
+import os, re, sys
+card, run, tasks, seed = sys.argv[1], sys.argv[2], int(sys.argv[3]), int(sys.argv[4])
+text = open(card).read()
+m = re.search(r'^(\s*)NEvents:\s*(\d+)', text, re.M)
+if not m:
+    sys.exit("The run card has no NEvents.")
+per_task = -(-int(m.group(2)) // tasks)
+
+def set_seed(options, value):
+    if re.search(r'^\s*Seed:', options, re.M):
+        return re.sub(r'^(\s*Seed:\s*)\S+', lambda s: s.group(1) + str(value), options, count=1, flags=re.M)
+    return "Initialize:\n  Seed: %d\n" % value + options if not re.search(r'^Initialize:', options, re.M) \
+        else re.sub(r'^Initialize:\n', 'Initialize:\n  Seed: %d\n' % value, options, count=1, flags=re.M)
+
+inc = re.search(r'^Options:[ \t]*!include[ \t]+"?([^"\n]+?)"?[ \t]*$', text, re.M)
+if inc:
+    path = inc.group(1)
+    for d in [os.path.dirname(card), os.environ["ACHILLES_PATH"]]:
+        if os.path.exists(os.path.join(d, path)):
+            options = open(os.path.join(d, path)).read()
+            break
+    else:
+        sys.exit("Can't find the Options file " + path)
+
+for i in range(1, tasks + 1):
+    task = os.path.join(run, "task-%03d" % i)
+    os.makedirs(task)
+    t = re.sub(r'^(\s*NEvents:\s*)\d+', lambda s: s.group(1) + str(per_task), text, count=1, flags=re.M)
+    if inc:
+        open(os.path.join(task, "options.yml"), "w").write(set_seed(options, seed + i))
+        t = t[:inc.start()] + 'Options: !include "options.yml"' + t[inc.end():]
+    elif re.search(r'^Options:', t, re.M):
+        t = set_seed(t, seed + i)  # inline Options block
+    else:
+        t += "\nOptions:\n  Initialize:\n    Seed: %d\n" % (seed + i)
+    open(os.path.join(task, "run.yml"), "w").write(t)
+print("%d tasks of %d events each" % (tasks, per_task))
+EOF
+
+common=(--parsable --time="$time" --mem="$mem" --cpus-per-task=1)
+[[ -n $account ]] && common+=(--account="$account")
+[[ -n $partition ]] && common+=(--partition="$partition")
+
+events=$(sbatch "${common[@]}" --job-name="ach-$run_id" --array="1-$tasks" \
+    --output="$run/logs/task-%a.out" <<EOF
+#!/bin/bash -l
+source ~/.dotfiles/hpc/achilles-env.sh
+cd "$run/task-\$(printf %03d \$SLURM_ARRAY_TASK_ID)"
+export ACHILLES_PATH="$worktree"
+"$binary" -b run.yml
+EOF
+)
+echo "Events:   job $events ($tasks tasks) -> $run"
+
+if [[ -n $analysis ]]; then
+    ana=$(sbatch "${common[@]}" --job-name="ana-$run_id" --dependency="afterok:$events" \
+        --output="$run/logs/analysis.out" <<EOF
+#!/bin/bash -l
+source ~/.dotfiles/hpc/achilles-env.sh
+cd "$run"
+export RUN_DIR="$run" ACHILLES_PATH="$worktree"
+export EVENT_FILES="\$(ls -d task-*/* | grep -E '\.(hepmc|hepmc3)(\.gz)?$' | tr '\n' ' ')"
+$analysis
+EOF
+)
+    echo "Analysis: job $ana, after every event task succeeds; plots -> $run/plots"
+fi
