@@ -1,8 +1,13 @@
 -- Edit Overleaf projects live from Neovim (unofficial; uses Overleaf's
 -- real-time protocol). On trial: `:Overleaf` to log in and pick a project.
 --
--- From jxi24's fork until the keys = false fix (upstream issue #20) is merged:
--- upstream always sets its <leader>o keys, over obsidian.nvim's.
+-- From jxi24's fork, branch personal: upstream plus two fixes not merged yet,
+--   fix/keys-option      keys = false works (#20); upstream always sets its
+--                        <leader>o keys, over obsidian.nvim's
+--   fix/download-safety  the cookie isn't sent on redirects or URLs outside
+--                        Overleaf, and download names can't leave pdf_dir
+--   feat/connected-event a User OverleafConnected event, which paper_notes.lua
+--                        uses to offer a vault paper note for the project
 --
 -- Login: the overleaf_session2 cookie from the browser (Zen: devtools,
 -- Storage, Cookies, www.overleaf.com), in ~/.config/overleaf/env as
@@ -12,7 +17,7 @@
 return {
     {
         "jxi24/overleaf.nvim",
-        branch = "fix/keys-option",
+        branch = "personal",
         cmd = "Overleaf",
         -- The bridge is a Node.js program; skip it where there's no Node (the cluster).
         -- It needs Overleaf's socket.io fork from GitHub, and npm 12 refuses git
@@ -35,6 +40,10 @@ return {
             pdf_dir = vim.fn.expand("~/.cache/overleaf"),
             -- sync_dir stays unset: it mirrors every document to disk.
         },
+        config = function(_, opts)
+            require("overleaf").setup(opts)
+            require("paper_notes").setup()
+        end,
         init = function()
             vim.fn.mkdir(vim.fn.expand("~/.cache/overleaf"), "p", tonumber("700", 8))
         end,
@@ -52,6 +61,7 @@ return {
             { "<leader>Lf", function() require("overleaf").search() end, desc = "Find in project" },
             { "<leader>Lh", "<cmd>Overleaf history<cr>", desc = "History" },
             { "<leader>Ls", "<cmd>Overleaf status<cr>", desc = "Status" },
+            { "<leader>Ln", function() require("paper_notes").open() end, desc = "Paper note (vault)" },
         },
     },
 }
