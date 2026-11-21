@@ -84,6 +84,13 @@ startup_command = "arxiv-tui"
 name = "faculty"
 path = "~/Documents/Faculty"
 
+# ICER cluster: a tmux session on the dev node that keeps running while the
+# laptop is away. Its prefix is C-b and its bar is at the bottom.
+[[session]]
+name = "icer"
+path = "~"
+startup_command = "~/.config/sesh/remote-tmux.sh hpcc-dev"
+
 [[session]]
 name = "Monitoring"
 path = "~"

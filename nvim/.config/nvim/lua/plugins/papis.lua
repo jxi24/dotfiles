@@ -1,6 +1,9 @@
 return {
     {
         "jghauser/papis.nvim",
+        -- Only where papis itself is installed (not on the ICER cluster). Its
+        -- luarocks build fails without it and stalls the rest of the startup.
+        enabled = vim.fn.executable("papis") == 1,
         dependencies = {
             "kkharji/sqlite.lua",
             "MunifTanjim/nui.nvim",
