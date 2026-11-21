@@ -33,9 +33,11 @@ return {
                     path = "~/Documents/Obsidian/Personal/",
                 },
             },
+            -- No template: Templates/daily.md is written for Obsidian's Templater
+            -- (<% tp.file.title %>), which obsidian.nvim can't fill in. Daily notes
+            -- are made by :GtdToday (see the <leader>ot key below).
             daily_notes = {
                 date_format = "%Y-%m-%d",
-                template = "daily.md", -- relative to templates.folder
                 folder = "Daily Notes"
             },
             completion = {
@@ -60,8 +62,28 @@ return {
         },
         keys = {
             { "<leader>o", "", desc = "Obsidian" },
-            { "<leader>ot", "<cmd>Obsidian today<cr>", desc = "Today's note" },
-            { "<leader>oy", "<cmd>Obsidian yesterday<cr>", desc = "Yesterday's note" },
+            -- The GTD tooling makes daily notes from the Templater template the way
+            -- Obsidian does; obsidian.nvim would leave its <% %> tags in the note.
+            {
+                "<leader>ot",
+                function()
+                    vim.cmd(vim.fn.exists(":GtdToday") == 2 and "GtdToday" or "Obsidian today")
+                end,
+                desc = "Today's note",
+            },
+            {
+                "<leader>oy",
+                function()
+                    local day = os.date("%Y-%m-%d", os.time() - 86400)
+                    local note = vim.fn.expand("~/Documents/Obsidian/Work/Daily Notes/") .. day .. ".md"
+                    if vim.fn.filereadable(note) == 1 then
+                        vim.cmd.edit(vim.fn.fnameescape(note))
+                    else
+                        vim.notify("No daily note for " .. day)
+                    end
+                end,
+                desc = "Yesterday's note",
+            },
             { "<leader>od", "<cmd>Obsidian dailies<cr>", desc = "Open daily note selector" },
             { "<leader>oc", "<cmd>Obsidian toggle_checkbox<cr>", desc = "Cycle checkbox" },
             {
