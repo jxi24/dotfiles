@@ -14,6 +14,7 @@
 #     -s SEED     base seed; task i uses SEED + i (default 1000)
 #     -d JOB      start only after job JOB succeeds, e.g. the id achilles-build printed
 #     -I          integrate in every task instead of once up front
+#     -P PROJECT  the GTD project the run is noted under (default Achilles)
 #
 # Each run gets $SCRATCH/achilles/<date>-<card>/. A first job integrates once
 # in integrate/; then each array task copies that cache into its own task-NNN/
@@ -24,8 +25,8 @@
 
 set -euo pipefail
 
-tasks=10 analysis="" account="" partition="" time=04:00:00 mem=4G seed=1000 after="" integrate=true
-while getopts "n:a:A:p:t:m:s:d:Ih" opt; do
+tasks=10 analysis="" account="" partition="" time=04:00:00 mem=4G seed=1000 after="" integrate=true project=Achilles
+while getopts "n:a:A:p:t:m:s:d:IP:h" opt; do
     case $opt in
     n) tasks=$OPTARG ;;
     a) analysis=$OPTARG ;;
@@ -36,7 +37,8 @@ while getopts "n:a:A:p:t:m:s:d:Ih" opt; do
     s) seed=$OPTARG ;;
     d) after=$OPTARG ;;
     I) integrate=false ;;
-    *) sed -n '2,24p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
+    P) project=$OPTARG ;;
+    *) sed -n '2,25p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
     esac
 done
 shift $((OPTIND - 1))
@@ -70,6 +72,7 @@ cp "$card" "$run/run.yml"
     fi
     echo "tasks:    $tasks, base seed $seed, account ${account:-default}"
     echo "analysis: ${analysis:-none}"
+    echo "project:  $project"
 } >"$run/provenance.txt"
 git -C "$worktree" diff --quiet HEAD || git -C "$worktree" diff HEAD >"$run/changes.patch"
 
@@ -127,6 +130,9 @@ EOF
 # --kill-on-invalid-dep: when a job this depends on fails, SLURM cancels this
 # one instead of leaving it pending forever.
 common=(--parsable --time="$time" --mem="$mem" --cpus-per-task=1 --kill-on-invalid-dep=yes)
+# The laptop's slurm-watch notes the run's last job under its project (in the
+# Work vault); the helper jobs before it say log=no.
+helper=(--comment="project=$project;log=no")
 [[ -n $account ]] && common+=(--account="$account")
 [[ -n $partition ]] && common+=(--partition="$partition")
 
@@ -134,7 +140,7 @@ dep=()
 [[ -n $after ]] && dep=(--dependency="afterok:$after")
 
 if $integrate; then
-    integ=$(sbatch "${common[@]}" "${dep[@]}" --job-name="int-$run_id" \
+    integ=$(sbatch "${common[@]}" "${helper[@]}" "${dep[@]}" --job-name="int-$run_id" \
         --output="$run/logs/integrate.out" <<EOF
 #!/bin/bash -l
 source ~/.dotfiles/hpc/achilles-env.sh
@@ -152,7 +158,7 @@ EOF
     dep=(--dependency="afterok:$integ")
 fi
 
-events=$(sbatch "${common[@]}" "${dep[@]}" --job-name="ach-$run_id" --array="1-$tasks" \
+events=$(sbatch "${common[@]}" "${helper[@]}" "${dep[@]}" --job-name="ach-$run_id" --array="1-$tasks" \
     --output="$run/logs/task-%a.out" <<EOF
 #!/bin/bash -l
 source ~/.dotfiles/hpc/achilles-env.sh
@@ -173,7 +179,7 @@ EOF
 echo "Events:   job $events ($tasks tasks) -> $run"
 
 if [[ -n $analysis ]]; then
-    ana=$(sbatch "${common[@]}" --job-name="ana-$run_id" --dependency="afterok:$events" \
+    ana=$(sbatch "${common[@]}" --comment="project=$project" --job-name="ana-$run_id" --dependency="afterok:$events" \
         --output="$run/logs/analysis.out" <<EOF
 #!/bin/bash -l
 source ~/.dotfiles/hpc/achilles-env.sh
@@ -184,6 +190,15 @@ $analysis
 EOF
 )
     echo "Analysis: job $ana, after every event task succeeds; plots -> $run/plots"
+else
+    # No analysis: a one-second job marks the end of the run, so it's still
+    # noted (and notified) once every task has succeeded.
+    sbatch --parsable --time=00:01:00 --mem=100M --cpus-per-task=1 --kill-on-invalid-dep=yes \
+        ${account:+--account="$account"} ${partition:+--partition="$partition"} --comment="project=$project" \
+        --job-name="end-$run_id" --dependency="afterok:$events" --output=/dev/null >/dev/null <<EOF
+#!/bin/bash
+true
+EOF
 fi
 
 # Start the laptop's job watcher, if the icer connection is up.

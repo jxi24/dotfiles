@@ -7,22 +7,34 @@ directory is a package whose contents mirror `$HOME`.
 |------------|---------------|
 | `bash`     | `.bashrc`, `.profile` |
 | `git`      | `.gitconfig`, global ignore, `git clone-worktree` script |
-| `nvim`     | Neovim config |
+| `nvim`     | Neovim config; `<leader>sr` / `Alt-r` (insert) cites a paper from the Work vault's paper notes, `<leader>sI` from an INSPIRE search (`lua/cite.lua`) |
 | `ghostty`  | Ghostty config and the launcher that attaches to tmux |
 | `tmux`     | tmux config and the worktree and talk scripts |
 | `sesh`     | sesh project layouts |
 | `starship` | prompt |
 | `atuin`    | shell history |
+| `build`    | C++ build defaults: ccache shared across worktrees, Ninja memory caps, lld |
+| `matplotlib` | `slides` and `paper` plot styles (`plt.style.use("slides")`) |
 | `slurm`    | SLURM job notifications and queue viewer for the ICER cluster |
 | `hpc`      | used on the cluster itself (not stowed): shell setup, Achilles modules, job submission |
 | `wezterm`  | old terminal config, no longer used |
+
+## C++ builds
+
+`.bashrc` makes new CMake build directories use Ninja and load
+`~/.config/cmake/defaults.cmake`, which caps parallel compiles at one per
+4 GB of RAM and links at two (Ninja job pools; `BUILD_COMPILE_JOBS=<n>` at
+configure time overrides), and links with lld. ccache is
+shared across git worktrees, so a new worktree off a recent branch mostly
+builds from cache, and CPM downloads dependencies once into `~/.cache/CPM`.
+Existing build directories keep their generator; delete one to switch it.
 
 ## New machine
 
 1. Install the tools (Arch package names; `sesh-bin` is in the AUR):
 
    ```bash
-   sudo pacman -S stow git neovim ghostty tmux zoxide fzf github-cli glab eza git-delta cmake
+   sudo pacman -S stow git neovim ghostty tmux zoxide fzf github-cli glab eza git-delta cmake ninja ccache lld
    yay -S sesh-bin
    curl -sS https://starship.rs/install.sh | sh                                         # starship
    curl --proto '=https' --tlsv1.2 -LsSf https://setup.atuin.sh | sh                     # atuin
@@ -35,7 +47,7 @@ directory is a package whose contents mirror `$HOME`.
    ```bash
    git clone https://github.com/jxi24/dotfiles ~/.dotfiles
    cd ~/.dotfiles
-   stow bash git nvim ghostty tmux sesh starship atuin slurm
+   stow bash git nvim ghostty tmux sesh starship atuin slurm build matplotlib
    systemctl --user enable --now slurm-watch slurm-watch-wake.socket   # SLURM notifications
    ```
 
@@ -66,7 +78,9 @@ The tmux leader is `Ctrl-a`.
 | `leader S`   | previous project |
 | `leader n`   | new worktree from a branch name, with the default cmake configure |
 | `leader N`   | new worktree from a GitHub issue or PR |
-| `leader t`   | new talk folder in `~/Documents/Talks` |
+| `leader t`   | new talk folder in `~/Documents/Talks`; with a date, also a "Prepare talk" GTD task |
+| `leader g`   | GTD: what to work on now (`gtd.py now`, paged) |
+| `leader C`   | GTD: capture a line into today's Log (`done:`, `new:`, `wait:`, ...) |
 | `leader D`   | list worktrees by last commit and remove finished ones |
 | `leader Q`   | SLURM queue and the last day's finished jobs on ICER |
 | `leader W` / `leader R` | save / restore all sessions (also automatic every 15 minutes) |
@@ -92,16 +106,16 @@ git clone https://github.com/jxi24/dotfiles ~/.dotfiles
 ln -s ~/.dotfiles/nvim/.config/nvim ~/.config/nvim
 mkdir -p ~/.config/tmux && ln -s ~/.dotfiles/tmux/.config/tmux/remote.conf ~/.config/tmux/tmux.conf
 ln -s ~/.dotfiles/hpc/achilles-submit ~/.dotfiles/hpc/run-notebook ~/.local/bin/
+mkdir -p ~/.config/matplotlib && ln -s ~/.dotfiles/matplotlib/.config/matplotlib/stylelib ~/.config/matplotlib/
 echo '[ -f ~/.dotfiles/hpc/bashrc.sh ] && . ~/.dotfiles/hpc/bashrc.sh' >> ~/.bashrc
 nvim --headless "+Lazy! sync" +qa
 nvim --headless -c "MasonInstall clangd neocmakelsp lua-language-server ruff rust-analyzer fortitude fortls debugpy" -c qa
 ```
 
-To update the cluster's copy later. The lock file always shows as changed there,
-because the cluster skips papis.nvim and its two dependencies:
+To update the cluster's copy later:
 
 ```bash
-cd ~/.dotfiles && git checkout -- nvim/.config/nvim/lazy-lock.json && git pull
+cd ~/.dotfiles && git pull
 ```
 
 ### Achilles pipeline
@@ -153,3 +167,12 @@ they're gone. Submitting on the cluster (`achilles-submit`, or `sbatch` in a
 shell that sources `hpc/bashrc.sh`) wakes it through a socket the `icer`
 connection forwards; so does opening `leader Q`. An hourly check catches jobs
 submitted any other way (`SLURM_WATCH_IDLE=0` turns that off).
+
+Finished jobs are also noted in the Work vault: a dated `note: #Project ...`
+line goes into that project's notes (through `gtd-capture`), so each project
+keeps a record of what ran, with the plots folder for Achilles runs. The
+project comes from the job's comment (`sbatch --comment project=PSCascade`;
+`achilles-submit -P` sets it, default Achilles), else from the cluster folder
+it ran in (`~/.config/slurm-watch/projects`). Helper jobs say `log=no`, and
+jobs with no project aren't noted. The tmux status bar also shows a running
+GTD focus session.

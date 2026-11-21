@@ -17,7 +17,8 @@
 # The hourly safety check catches jobs submitted without a wake-up, e.g. from
 # OnDemand or while icer was disconnected.
 #
-# Each job that leaves the queue is passed to slurm-on-finish, if installed.
+# Each job that leaves the queue is passed to slurm-on-finish, if installed,
+# with its state, run time, comment (e.g. project=PSCascade) and directory.
 #
 # Each check is one squeue over the shared ssh connection. A job that leaves
 # the queue is looked up once with sacct to report how it ended. A job that
@@ -32,7 +33,7 @@ summary=$cache/summary
 mkdir -p "$cache"
 : >"$summary"
 
-declare -A state name # last seen state and name of each job
+declare -A state name comment wdir # last seen state, name, comment and directory of each job
 first=true
 
 remote() { ssh -n -o BatchMode=yes -o ConnectTimeout=20 "$host" "$@" 2>/dev/null; }
@@ -47,10 +48,10 @@ notify() {
 }
 
 while true; do
-    if out=$(remote 'squeue --me -h -o "%i|%j|%T"'); then
+    if out=$(remote 'squeue --me -h -o "%i|%j|%T|%k|%Z"'); then
         declare -A now=()
         started=() running=0 pending=0
-        while IFS='|' read -r id jname st; do
+        while IFS='|' read -r id jname st jcomment jdir; do
             [[ -n $id ]] || continue
             case $st in
             RUNNING) ((running++)) ;;
@@ -61,6 +62,8 @@ while true; do
             [[ $id == *'['* ]] && continue
             now[$id]=$st
             name[$id]=$jname
+            comment[$id]=${jcomment/#(null)/}
+            wdir[$id]=$jdir
             [[ $first == false && $st == RUNNING && ${state[$id]} != RUNNING ]] &&
                 started+=("$jname ($id)")
         done <<<"$out"
@@ -90,8 +93,9 @@ while true; do
                 fi
                 # Per-job follow-up, e.g. copying plots home (slurm-on-finish).
                 command -v slurm-on-finish >/dev/null &&
-                    slurm-on-finish "$id" "${name[$id]}" "${st%% *}" >/dev/null 2>&1 &
-                unset "name[$id]"
+                    slurm-on-finish "$id" "${name[$id]}" "${st%% *}" "$elapsed" "${comment[$id]}" "${wdir[$id]}" \
+                        >/dev/null 2>&1 &
+                unset "name[$id]" "comment[$id]" "wdir[$id]"
             done
             ((${#ok[@]})) && notify normal "SLURM: ${#ok[@]} job(s) finished" "${ok[@]}"
             ((${#bad[@]})) && notify critical "SLURM: ${#bad[@]} job(s) failed" "${bad[@]}"

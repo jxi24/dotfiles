@@ -1,16 +1,52 @@
 #!/bin/bash
 # Called by slurm-watch for every job that leaves the queue:
-#   slurm-on-finish <job id> <job name> <final state>
-# When an Achilles analysis job (named ana-<run id> by achilles-submit)
-# completes, copy that run's plots home and say where they are.
+#   slurm-on-finish <job id> <name> <final state> <run time> <comment> <directory>
+#
+# 1. An Achilles analysis job (ana-<run id>, from achilles-submit) that
+#    completes: copy that run's plots home.
+# 2. A job that belongs to a GTD project: a dated line in that project's notes
+#    in the Work vault (`note: #Project ...` through gtd-capture), so the
+#    project keeps a record of what ran. The project comes from the job's
+#    comment (sbatch --comment project=PSCascade), else from the folder it ran
+#    in (~/.config/slurm-watch/projects). Jobs commented log=no (helper jobs:
+#    builds, array tasks, integration) and jobs with no project write nothing.
 
-id=$1 name=$2 state=$3
+id=$1 name=$2 state=$3 elapsed=$4 comment=$5 dir=$6
+runs=${ICER_RUNS_DIR:-$HOME/Documents/Projects/NeutrinoGenerator/AchillesRuns}
 
+field() { [[ ";$comment;" =~ \;$1=([^;]*)\; ]] && printf '%s' "${BASH_REMATCH[1]}"; }
+
+# The project, from the comment or the folder map. Map lines: <folder> <Project>,
+# where the folder is an absolute cluster path or ~/path in your cluster home.
+project=$(field project)
+map=${XDG_CONFIG_HOME:-$HOME/.config}/slurm-watch/projects
+if [[ -z $project && -n $dir && -f $map ]]; then
+    while read -r folder proj; do
+        [[ -z $folder || $folder == \#* ]] && continue
+        if [[ $folder == '~/'* ]]; then
+            [[ $dir =~ /home/[^/]+/${folder#\~/}(/|$) ]] && { project=$proj; break; }
+        elif [[ $dir == "$folder" || $dir == "$folder"/* ]]; then
+            project=$proj
+            break
+        fi
+    done <"$map"
+fi
+
+line=""
 if [[ $name == ana-* && $state == COMPLETED ]]; then
     run=${name#ana-}
     if out=$(icer-fetch-plots "$run" 2>&1); then
         notify-send -a SLURM "Plots for $run are on the laptop" "${out#Copied to }"
+        line="run $run finished on ICER in $elapsed; plots in ${runs/#$HOME/\~}/$run"
     else
         notify-send -a SLURM -u critical "Couldn't copy the plots for $run" "${out##*$'\n'}"
+        line="run $run finished on ICER, but copying its plots failed"
     fi
+elif [[ $name == end-* && $state == COMPLETED ]]; then
+    line="run ${name#end-} finished on ICER in $elapsed (events only, in \$SCRATCH/achilles/${name#end-})"
 fi
+
+[[ -n $project && $(field log) != no ]] || exit 0
+[[ -n $line ]] || line="SLURM job $name ($id) on ICER: ${state:-ended}${elapsed:+ after $elapsed}"
+command -v gtd-capture >/dev/null && GTD_BY=timer gtd-capture "note: #$project $line" >/dev/null 2>&1
+exit 0

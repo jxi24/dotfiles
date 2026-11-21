@@ -41,7 +41,7 @@ mkdir -p ~/analysis ~/.cache/achilles-notebook
 [[ -e ~/analysis/template.ipynb ]] || cp ~/.dotfiles/hpc/analysis-template.ipynb ~/analysis/template.ipynb
 [[ -n $account ]] || account=$(~/.dotfiles/hpc/pick-account)
 
-args=(--parsable --job-name="nb-$(basename "$run")" --time="$time" --cpus-per-task="$cpus"
+args=(--parsable --comment=log=no --job-name="nb-$(basename "$run")" --time="$time" --cpus-per-task="$cpus"
       --mem="$mem" --output="$HOME/.cache/achilles-notebook/%j.log")
 [[ -n $account ]] && args+=(--account="$account")
 

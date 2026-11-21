@@ -1,0 +1,6 @@
+# Which GTD project a SLURM job belongs to, by the cluster folder it ran in.
+# slurm-on-finish writes a line in that project's notes when the job ends.
+# A job's own comment wins: sbatch --comment project=<Project>[;log=no]
+#
+# <folder: absolute, or ~/path in your cluster home>   <Project note name>
+~/Achilles    Achilles

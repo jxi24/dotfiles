@@ -1,0 +1,20 @@
+# plt.style.use("slides"): 16:9 plots readable from the back of a room.
+figure.figsize: 8, 4.5
+figure.dpi: 100
+font.size: 18
+axes.labelsize: 20
+axes.titlesize: 20
+legend.fontsize: 16
+xtick.labelsize: 16
+ytick.labelsize: 16
+lines.linewidth: 2.5
+lines.markersize: 8
+axes.linewidth: 1.2
+axes.spines.top: False
+axes.spines.right: False
+legend.frameon: False
+mathtext.fontset: cm
+# Okabe-Ito: distinguishable with colour blindness and on a projector.
+axes.prop_cycle: cycler("color", ["0072B2", "D55E00", "009E73", "CC79A7", "E69F00", "56B4E9", "F0E442", "000000"])
+savefig.dpi: 200
+savefig.bbox: tight

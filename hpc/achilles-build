@@ -43,7 +43,7 @@ if [[ ! -f $build/CMakeCache.txt ]]; then
 fi
 
 [[ -n $account ]] || account=$(~/.dotfiles/hpc/pick-account)
-args=(--parsable --job-name="build-$(basename "$worktree")" --time="$time" --cpus-per-task="$cpus"
+args=(--parsable --comment=log=no --job-name="build-$(basename "$worktree")" --time="$time" --cpus-per-task="$cpus"
       --mem="$mem" --output="$build/build.log")
 [[ -n $account ]] && args+=(--account="$account")
 
