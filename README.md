@@ -91,7 +91,7 @@ One-time setup on the cluster, after installing Neovim into `~/.local/bin`:
 git clone https://github.com/jxi24/dotfiles ~/.dotfiles
 ln -s ~/.dotfiles/nvim/.config/nvim ~/.config/nvim
 mkdir -p ~/.config/tmux && ln -s ~/.dotfiles/tmux/.config/tmux/remote.conf ~/.config/tmux/tmux.conf
-ln -s ~/.dotfiles/hpc/achilles-submit ~/.local/bin/
+ln -s ~/.dotfiles/hpc/achilles-submit ~/.dotfiles/hpc/run-notebook ~/.local/bin/
 echo '[ -f ~/.dotfiles/hpc/bashrc.sh ] && . ~/.dotfiles/hpc/bashrc.sh' >> ~/.bashrc
 nvim --headless "+Lazy! sync" +qa
 nvim --headless -c "MasonInstall clangd neocmakelsp lua-language-server ruff rust-analyzer fortitude fortls debugpy" -c qa
@@ -121,6 +121,21 @@ finishes, `slurm-watch` on the laptop copies `plots/`, the run card and
 `~/Documents/Projects/NeutrinoGenerator/AchillesRuns/`; event files stay in
 scratch. `icer-fetch-plots [run id]` copies by hand. `achilles-submit -h`
 lists options; it asks for the SLURM account when you have more than one.
+
+To develop an analysis, generate events without `-a`, then run
+`icer-notebook [run id]` on the laptop. It starts JupyterLab as a SLURM job on
+a compute node (dev nodes stop anything past 2 CPU-hours), tunnels to
+it, and opens the browser; Ctrl-C ends the job. Notebooks live in `~/analysis`
+on the cluster, starting from `template.ipynb` (reads HepMC3, writes to
+`plots/`); `runs/` links to the runs in scratch, and the kernel's `RUN_DIR` is
+the chosen run, the newest by default. Once a notebook does what you want, it
+becomes the pipeline's analysis step:
+
+```bash
+achilles-submit -n 20 -a 'run-notebook ~/analysis/my-analysis.ipynb' run.yml
+```
+
+The executed notebook, outputs included, comes home with the plots.
 
 ICER's acceptable use rules count frequent squeue/sacct calls as overuse, so
 `slurm-watch` checks every 5 minutes while you have jobs and switches off once

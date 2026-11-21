@@ -1,0 +1,62 @@
+#!/bin/bash
+# Start JupyterLab as a SLURM job on a compute node, for developing an Achilles
+# analysis on events in scratch. Normally started from the laptop with
+# icer-notebook, which also opens the tunnel and the browser. Dev nodes stop
+# anything past 2 CPU-hours, so notebooks always run as SLURM jobs.
+#
+#   achilles-notebook [options] [run id]   prints the job id
+#     run id      a folder in $SCRATCH/achilles (default: the newest)
+#     -A ACCOUNT  SLURM account (asked when you have several)
+#     -t TIME     time limit (default 02:00:00)
+#     -c CPUS     CPUs (default 2)
+#     -m MEM      memory (default 8G)
+#
+# Notebooks live in ~/analysis, which is the Jupyter root. ~/analysis/runs
+# links to $SCRATCH/achilles. The kernel gets RUN_DIR (the chosen run) and
+# EVENT_FILES. When the server is up, its node, port and token are written to
+# ~/.cache/achilles-notebook/<job id>.
+
+set -euo pipefail
+account="" time=02:00:00 cpus=2 mem=8G
+while getopts "A:t:c:m:h" opt; do
+    case $opt in
+    A) account=$OPTARG ;; t) time=$OPTARG ;; c) cpus=$OPTARG ;; m) mem=$OPTARG ;;
+    *) sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
+    esac
+done
+shift $((OPTIND - 1))
+[[ -n ${SCRATCH:-} ]] || { echo "\$SCRATCH isn't set." >&2; exit 1; }
+
+runs=$SCRATCH/achilles
+if [[ -n ${1:-} ]]; then
+    run=$runs/$1
+else
+    run=$(ls -d "$runs"/*/ 2>/dev/null | sort | tail -1)
+    run=${run%/}
+fi
+[[ -n $run && -d $run ]] || { echo "No run at ${run:-$runs/*}" >&2; exit 1; }
+
+mkdir -p ~/analysis ~/.cache/achilles-notebook
+[[ -e ~/analysis/runs ]] || ln -s "$runs" ~/analysis/runs
+[[ -e ~/analysis/template.ipynb ]] || cp ~/.dotfiles/hpc/analysis-template.ipynb ~/analysis/template.ipynb
+[[ -n $account ]] || account=$(~/.dotfiles/hpc/pick-account)
+
+args=(--parsable --job-name="nb-$(basename "$run")" --time="$time" --cpus-per-task="$cpus"
+      --mem="$mem" --output="$HOME/.cache/achilles-notebook/%j.log")
+[[ -n $account ]] && args+=(--account="$account")
+
+sbatch "${args[@]}" <<EOF
+#!/bin/bash -l
+source ~/.dotfiles/hpc/achilles-env.sh
+module load JupyterLab/4.0.5-GCCcore-12.3.0
+export RUN_DIR="$run"
+cd "$run"
+export EVENT_FILES="\$(ls -d task-*/* 2>/dev/null | grep -E '\.(hepmc|hepmc3)(\.gz)?\$' | sed "s|^|$run/|" | tr '\n' ' ')"
+port=\$(python3 -c 'import socket; s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])')
+token=\$(python3 -c 'import secrets; print(secrets.token_hex(24))')
+info=~/.cache/achilles-notebook/\$SLURM_JOB_ID
+( umask 077; echo "\$(hostname -s) \$port \$token" > "\$info" )
+trap 'rm -f "\$info"' EXIT
+jupyter lab --no-browser --ip=127.0.0.1 --port="\$port" \\
+    --IdentityProvider.token="\$token" --ServerApp.root_dir="\$HOME/analysis"
+EOF

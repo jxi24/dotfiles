@@ -1,0 +1,12 @@
+#!/bin/bash
+# Run a finished analysis notebook as the analysis step of a pipeline run:
+#   achilles-submit -a 'run-notebook ~/analysis/my-analysis.ipynb' run.yml
+# Runs it top to bottom in the run directory with RUN_DIR and EVENT_FILES set
+# (achilles-submit sets them), and saves the executed copy, outputs included,
+# as plots/<name>.ipynb so it comes home with the plots.
+set -euo pipefail
+nb=$(realpath "${1:?usage: run-notebook <notebook.ipynb>}")
+module load JupyterLab/4.0.5-GCCcore-12.3.0
+mkdir -p plots
+jupyter nbconvert --to notebook --execute "$nb" --output-dir plots --output "$(basename "$nb")" \
+    --ExecutePreprocessor.timeout=-1

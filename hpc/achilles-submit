@@ -44,15 +44,7 @@ binary=$worktree/build/bin/achilles
 [[ -n ${SCRATCH:-} ]] || { echo "\$SCRATCH isn't set."; exit 1; }
 
 # Account: use -A, the only one you have, or ask.
-if [[ -z $account ]]; then
-    mapfile -t accounts < <(sacctmgr -nP show assoc user="$USER" format=account | sort -u | grep .)
-    if ((${#accounts[@]} == 1)); then
-        account=${accounts[0]}
-    elif ((${#accounts[@]} > 1)); then
-        echo "Which SLURM account?"
-        select account in "${accounts[@]}"; do [[ -n $account ]] && break; done
-    fi
-fi
+[[ -n $account ]] || account=$(~/.dotfiles/hpc/pick-account)
 
 run_id=$(date +%Y%m%d-%H%M%S)-$(basename "$card" .yml)
 run=$SCRATCH/achilles/$run_id

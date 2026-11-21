@@ -1,0 +1,73 @@
+#!/bin/bash
+# Develop an Achilles analysis in JupyterLab on an ICER compute node, against
+# events in scratch. Starts the notebook job (hpc/achilles-notebook), waits for
+# it, tunnels to it and opens the browser. Ctrl-C ends the job, so it doesn't
+# hold its allocation after you're done.
+#
+#   icer-notebook [-A account] [-t time] [-c cpus] [-m mem] [run id]
+#     run id: a folder in $SCRATCH/achilles (default: the newest run)
+#
+# Notebooks are kept in ~/analysis on the cluster. When one does what you want,
+# use it as a pipeline's analysis step:
+#   achilles-submit -a 'run-notebook ~/analysis/<name>.ipynb' run.yml
+
+host=${ICER_HOST:-hpcc-dev}
+q() { printf '%q ' "$@"; }
+
+# Ask for the account here when -A isn't given and you have several.
+args=("$@")
+if [[ " $* " != *" -A"* ]]; then
+    mapfile -t accounts < <(ssh -n "$host" 'sacctmgr -nP show assoc user=$USER format=account' | sort -u | grep .)
+    if ((${#accounts[@]} > 1)); then
+        PS3="Which SLURM account? "
+        select account in "${accounts[@]}"; do [[ -n $account ]] && break; done
+        args=(-A "$account" "${args[@]}")
+    fi
+fi
+hpc=${ICER_HPC_DIR:-'~/.dotfiles/hpc'}
+job=$(ssh -n "$host" "bash -lc $(q "$hpc/achilles-notebook $(q "${args[@]}")")" | tail -1)
+[[ $job =~ ^[0-9]+$ ]] || { echo "Couldn't start the notebook job: $job"; exit 1; }
+
+tunnel=""
+cleanup() {
+    [[ -n $tunnel ]] && kill "$tunnel" 2>/dev/null
+    ssh -n "$host" "scancel $job; rm -f ~/.cache/achilles-notebook/$job" 2>/dev/null
+    echo "Ended notebook job $job."
+}
+trap cleanup EXIT
+trap exit INT TERM
+
+# Wait for the server to write its address. Reading a file isn't a SLURM call;
+# the queue is checked once a minute only to notice a job that died.
+echo "Job $job is queued. Waiting for a compute node (Ctrl-C to cancel)..."
+for ((i = 1; ; i++)); do
+    info=$(ssh -n "$host" "cat ~/.cache/achilles-notebook/$job 2>/dev/null")
+    [[ -n $info ]] && break
+    if ((i % 6 == 0)) && [[ -z $(ssh -n "$host" "squeue -h -j $job -o %T 2>/dev/null") ]]; then
+        echo "The job ended before the notebook started. Its log:"
+        ssh -n "$host" "tail -20 ~/.cache/achilles-notebook/$job.log"
+        exit 1
+    fi
+    sleep 10
+done
+read -r node port token <<<"$info"
+
+lport=$(python3 -c 'import socket; s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])')
+# The compute node isn't in ~/.ssh/config, so take the user and key from $host.
+user=$(ssh -G "$host" | awk '/^user / { print $2 }')
+key=$(ssh -G "$host" | awk '/^identityfile / { print $2; exit }')
+ssh -N -o ControlPath=none -o BatchMode=yes -o ExitOnForwardFailure=yes \
+    -o StrictHostKeyChecking=accept-new -l "$user" -i "${key/#\~/$HOME}" \
+    -J "$host" -L "$lport:127.0.0.1:$port" "$node" &
+tunnel=$!
+
+url="http://127.0.0.1:$lport/lab?token=$token"
+for _ in {1..30}; do
+    curl -s -o /dev/null "http://127.0.0.1:$lport/api" && break
+    sleep 1
+done
+echo "JupyterLab on $node: $url"
+xdg-open "$url" >/dev/null 2>&1 &
+echo "Ctrl-C ends the notebook job. Save your notebooks first."
+wait "$tunnel"
+echo "The tunnel closed (the job ended or the connection dropped)."
