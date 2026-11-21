@@ -4,13 +4,18 @@
 # Runs as the slurm-watch user service; see slurm-watch.service.
 #
 #   slurm-watch [ssh host]       default host: hpcc-dev
-#   SLURM_WATCH_ACTIVE=120       seconds between checks while you have jobs
-#   SLURM_WATCH_IDLE=600         seconds between checks when you have none
+#   SLURM_WATCH_ACTIVE=300       seconds between checks while you have jobs
+#   SLURM_WATCH_IDLE=3600        safety check when you have none; 0 = never
 #
 # ICER's acceptable use rules count calling squeue/sacct "on a short interval"
-# as overuse, so this checks every 2 minutes at most, and every 10 when idle.
-# Send SIGUSR1 to check right away, e.g. after submitting a job:
-#   systemctl --user kill -s USR1 slurm-watch
+# as overuse. So this checks every 5 minutes while you have jobs, and once a
+# check finds none it switches off until something wakes it with SIGUSR1:
+#   - submitting on the cluster (achilles-submit, or sbatch in an icer shell),
+#     through the slurm-watch-wake socket that the icer connection forwards
+#   - opening the leader Q popup
+#   - systemctl --user kill -s USR1 slurm-watch
+# The hourly safety check catches jobs submitted without a wake-up, e.g. from
+# OnDemand or while icer was disconnected.
 #
 # Each job that leaves the queue is passed to slurm-on-finish, if installed.
 #
@@ -19,8 +24,8 @@
 # is submitted and finishes entirely between two checks is not seen.
 
 host=${1:-${SLURM_WATCH_HOST:-hpcc-dev}}
-active=${SLURM_WATCH_ACTIVE:-120}
-idle=${SLURM_WATCH_IDLE:-600}
+active=${SLURM_WATCH_ACTIVE:-300}
+idle=${SLURM_WATCH_IDLE:-3600}
 trap : USR1 # interrupts the wait below
 cache=${XDG_CACHE_HOME:-$HOME/.cache}/slurm-watch
 summary=$cache/summary
@@ -100,11 +105,18 @@ while true; do
         ((running)) && line+="R$running "
         ((pending)) && line+="Q$pending "
         printf '%s' "$line" >"$summary"
+        echo "checked: ${line:-no jobs}"
     else
         # Offline or the cluster is unreachable: hide the count, keep the state.
         : >"$summary"
     fi
-    if ((${#state[@]})) || [[ -n $(cat "$summary") ]]; then interval=$active; else interval=$idle; fi
+    if ((${#state[@]})) || [[ -n $(cat "$summary") ]]; then
+        interval=$active
+    elif ((idle == 0)); then
+        interval=infinity
+    else
+        interval=$idle
+    fi
     sleep "$interval" &
     wait $!
     kill $! 2>/dev/null

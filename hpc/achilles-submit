@@ -103,7 +103,8 @@ for i in range(1, tasks + 1):
     t = re.sub(r'^(\s*NEvents:\s*)\d+', lambda s: s.group(1) + str(per_task), text, count=1, flags=re.M)
     if inc:
         open(os.path.join(task, "options.yml"), "w").write(set_seed(options, seed + i))
-        t = t[:inc.start()] + 'Options: !include "options.yml"' + t[inc.end():]
+        # Matched again on t: its NEvents edit may have shifted inc's offsets.
+        t = re.sub(r'^Options:[ \t]*!include[ \t]+.*$', 'Options: !include "options.yml"', t, count=1, flags=re.M)
     elif re.search(r'^Options:', t, re.M):
         t = set_seed(t, seed + i)  # inline Options block
     else:
@@ -123,6 +124,13 @@ source ~/.dotfiles/hpc/achilles-env.sh
 cd "$run/task-\$(printf %03d \$SLURM_ARRAY_TASK_ID)"
 export ACHILLES_PATH="$worktree"
 "$binary" -b run.yml
+# Achilles exits 0 even when the run fails, so check that it wrote events.
+status=\$?
+if grep -q "Concluded - Failed" achilles.log 2>/dev/null || ! ls *.hepmc* >/dev/null 2>&1; then
+    echo "Achilles wrote no events; see achilles.log"
+    exit 1
+fi
+exit \$status
 EOF
 )
 echo "Events:   job $events ($tasks tasks) -> $run"
@@ -140,3 +148,6 @@ EOF
 )
     echo "Analysis: job $ana, after every event task succeeds; plots -> $run/plots"
 fi
+
+# Start the laptop's job watcher, if the icer connection is up.
+~/.dotfiles/hpc/slurm-wake

@@ -1,0 +1,11 @@
+#!/bin/bash
+# Tell the laptop's slurm-watch that a job was just submitted, so it starts
+# checking the queue (every 5 minutes, until the jobs are gone). Goes through
+# the socket that the icer connection forwards to this node; does nothing when
+# icer isn't connected. Called by achilles-submit and the sbatch wrapper in
+# hpc/bashrc.sh.
+
+sock=/tmp/slurm-watch-$USER.sock
+[[ -S $sock ]] || exit 0
+timeout 5 python3 -c 'import socket, sys; s = socket.socket(socket.AF_UNIX); s.connect(sys.argv[1]); s.close()' "$sock" 2>/dev/null
+exit 0

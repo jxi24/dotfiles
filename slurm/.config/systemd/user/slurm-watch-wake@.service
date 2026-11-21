@@ -1,0 +1,6 @@
+[Unit]
+Description=Wake slurm-watch for a job submitted on the cluster
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemctl --user kill -s USR1 slurm-watch.service

@@ -1,0 +1,12 @@
+[Unit]
+Description=Wake slurm-watch when a job is submitted on the cluster
+
+# The icer connection (sesh/remote-tmux.sh) forwards this socket to the dev
+# node, where achilles-submit and the sbatch wrapper connect to it.
+[Socket]
+ListenStream=%t/slurm-watch.sock
+SocketMode=0600
+Accept=yes
+
+[Install]
+WantedBy=sockets.target

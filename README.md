@@ -14,7 +14,7 @@ directory is a package whose contents mirror `$HOME`.
 | `starship` | prompt |
 | `atuin`    | shell history |
 | `slurm`    | SLURM job notifications and queue viewer for the ICER cluster |
-| `hpc`      | scripts used on the cluster itself (not stowed): Achilles modules and job submission |
+| `hpc`      | used on the cluster itself (not stowed): shell setup, Achilles modules, job submission |
 | `wezterm`  | old terminal config, no longer used |
 
 ## New machine
@@ -36,7 +36,7 @@ directory is a package whose contents mirror `$HOME`.
    git clone https://github.com/jxi24/dotfiles ~/.dotfiles
    cd ~/.dotfiles
    stow bash git nvim ghostty tmux sesh starship atuin slurm
-   systemctl --user enable --now slurm-watch   # SLURM notifications
+   systemctl --user enable --now slurm-watch slurm-watch-wake.socket   # SLURM notifications
    ```
 
 3. Add your git identity, which is kept out of the repo:
@@ -91,6 +91,8 @@ One-time setup on the cluster, after installing Neovim into `~/.local/bin`:
 git clone https://github.com/jxi24/dotfiles ~/.dotfiles
 ln -s ~/.dotfiles/nvim/.config/nvim ~/.config/nvim
 mkdir -p ~/.config/tmux && ln -s ~/.dotfiles/tmux/.config/tmux/remote.conf ~/.config/tmux/tmux.conf
+ln -s ~/.dotfiles/hpc/achilles-submit ~/.local/bin/
+echo '[ -f ~/.dotfiles/hpc/bashrc.sh ] && . ~/.dotfiles/hpc/bashrc.sh' >> ~/.bashrc
 nvim --headless "+Lazy! sync" +qa
 nvim --headless -c "MasonInstall clangd neocmakelsp lua-language-server ruff rust-analyzer fortitude fortls debugpy" -c qa
 ```
@@ -104,8 +106,8 @@ cd ~/.dotfiles && git checkout -- nvim/.config/nvim/lazy-lock.json && git pull
 
 ### Achilles pipeline
 
-On the cluster (one-time: `ln -s ~/.dotfiles/hpc/achilles-submit ~/.local/bin/`),
-build in a worktree with `source ~/.dotfiles/hpc/achilles-env.sh`, then:
+Achilles lives at `~/Achilles` on the cluster (`.bare` plus worktrees). Build
+in a worktree with `source ~/.dotfiles/hpc/achilles-env.sh`, then:
 
 ```bash
 achilles-submit -n 20 -a 'python3 ~/analysis/plots.py $EVENT_FILES' run.yml
@@ -121,4 +123,8 @@ scratch. `icer-fetch-plots [run id]` copies by hand. `achilles-submit -h`
 lists options; it asks for the SLURM account when you have more than one.
 
 ICER's acceptable use rules count frequent squeue/sacct calls as overuse, so
-`slurm-watch` checks every 2 minutes while you have jobs and every 10 otherwise.
+`slurm-watch` checks every 5 minutes while you have jobs and switches off once
+they're gone. Submitting on the cluster (`achilles-submit`, or `sbatch` in a
+shell that sources `hpc/bashrc.sh`) wakes it through a socket the `icer`
+connection forwards; so does opening `leader Q`. An hourly check catches jobs
+submitted any other way (`SLURM_WATCH_IDLE=0` turns that off).
