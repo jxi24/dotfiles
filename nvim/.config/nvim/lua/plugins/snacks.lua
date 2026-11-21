@@ -62,7 +62,10 @@ return {
             { "<leader>sR", function() Snacks.picker.resume() end, desc = "Resume" },
             { "<leader>su", function() Snacks.picker.undo() end, desc = "Undo History" },
             { "<leader>uC", function() Snacks.picker.colorschemes() end, desc = "Colorschemes" },
-            { "<leader>sr", "<cmd> Papis search<cr>", desc = "Search references" },
+            -- cite papers (lua/cite.lua): vault paper notes, or an INSPIRE search
+            { "<leader>sr", function() require("cite").vault_pick() end, desc = "Cite a paper (vault)" },
+            { "<leader>sI", function() require("cite").inspire_pick() end, desc = "Cite a paper (INSPIRE)" },
+            { "<M-r>", function() require("cite").vault_pick() end, mode = "i", desc = "Cite a paper (vault)" },
             -- LSP
             { "<leader>ld", function() Snacks.picker.lsp_definitions() end, desc = "Goto Definition" },
             { "<leader>lD", function() Snacks.picker.lsp_declarations() end, desc = "Goto Declaration" },
