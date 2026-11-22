@@ -1,0 +1,54 @@
+#!/bin/bash
+# Debug / Release / RelWithDebInfo presets for a CMake project, building into
+# build/<Type> (the folders cmake-tools.nvim uses too).
+#
+#   cmake-presets [DIR]          put ~/.config/cmake/CMakeUserPresets.json in the
+#                                project (DIR or the current git worktree), kept
+#                                out of git through the repo's info/exclude
+#   cmake-presets use TYPE [DIR] also configure TYPE and point the project's
+#                                compile_commands.json at build/TYPE, which makes
+#                                it the active build for clangd and neotest
+#
+# Then, from the project root:
+#   cmake --build --preset TYPE    ctest --preset TYPE [-R NAME]
+# A project's own CMakePresets.json is left alone; the user presets are added
+# beside it unless it already defines presets with these names.
+
+set -euo pipefail
+template=${CMAKE_PRESETS_TEMPLATE:-$HOME/.config/cmake/CMakeUserPresets.json}
+types=(Debug Release RelWithDebInfo)
+
+die() { echo "cmake-presets: $*" >&2; exit 1; }
+
+use=
+if [[ ${1:-} == use ]]; then
+    use=${2:-}
+    [[ " ${types[*]} " == *" $use "* ]] || die "use one of: ${types[*]}"
+    shift 2
+fi
+dir=${1:-$PWD}
+root=$(git -C "$dir" rev-parse --show-toplevel 2>/dev/null || (cd "$dir" && pwd))
+[[ -f $root/CMakeLists.txt ]] || die "no CMakeLists.txt in $root"
+
+presets=$root/CMakeUserPresets.json
+if [[ ! -e $presets ]]; then
+    if [[ -f $root/CMakePresets.json ]] && grep -Eq '"name"[[:space:]]*:[[:space:]]*"(Debug|Release|RelWithDebInfo)"' "$root/CMakePresets.json"; then
+        die "$root/CMakePresets.json already has Debug/Release/RelWithDebInfo presets; use those"
+    fi
+    cp "$template" "$presets"
+    echo "Added $presets (Debug, Release, RelWithDebInfo → build/<Type>)"
+fi
+
+# Keep it out of git: the shared info/exclude of the repo (all its worktrees).
+if common=$(git -C "$root" rev-parse --path-format=absolute --git-common-dir 2>/dev/null) &&
+    ! git -C "$root" check-ignore -q CMakeUserPresets.json; then
+    mkdir -p "$common/info"
+    echo "CMakeUserPresets.json" >>"$common/info/exclude"
+fi
+
+if [[ -n $use ]]; then
+    command -v ninja >/dev/null || die "the presets build with Ninja, which isn't installed"
+    (cd "$root" && cmake --preset "$use")
+    ln -sfn "build/$use/compile_commands.json" "$root/compile_commands.json"
+    echo "Active build: build/$use (cmake --build --preset $use, ctest --preset $use)"
+fi

@@ -14,9 +14,11 @@ preview = true
 
 # --- Reusable windows ---------------------------------------------------------
 
+# At the project root, where the presets run: cmake --build --preset RelWithDebInfo,
+# ctest --preset RelWithDebInfo (cmake-presets use TYPE switches the active build).
 [[window]]
 name = "build"
-startup_script = "cd build 2>/dev/null; clear"
+startup_script = "clear"
 
 [[window]]
 name = "agent"

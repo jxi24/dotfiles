@@ -6,10 +6,30 @@ end
 return {
     {
         "Civitasv/cmake-tools.nvim",
+        -- With CMake[User]Presets.json (cmake-presets adds Debug / Release / RelWithDebInfo)
+        -- the build folder is the preset's, build/<Type>; without, the same layout here.
         opts = {
             cmake_build_directory = function()
                 return "build/${variant:buildType}"
             end,
+            -- Link <root>/compile_commands.json to the build just generated (clangd and
+            -- neotest follow it). cmake-tools won't replace an existing link to another
+            -- build (fs_symlink fails with EEXIST), so drop it first; this runs only after
+            -- a successful generate.
+            cmake_compile_commands_options = {
+                action = "soft_link",
+                target = function()
+                    local cwd = vim.uv.cwd()
+                    local link = cwd .. "/compile_commands.json"
+                    local dir = require("cmake-tools").get_build_directory()
+                    local fresh = dir and vim.uv.fs_stat(tostring(dir) .. "/compile_commands.json")
+                    local st = vim.uv.fs_lstat(link)
+                    if fresh and st and st.type == "link" then
+                        os.remove(link)
+                    end
+                    return cwd
+                end,
+            },
         },
         keys = {
             { "<leader>c", "", desc = "CMake" },
@@ -17,7 +37,16 @@ return {
             { "<leader>cb", "<cmd>CMakeBuild -j8<cr>", desc = "Build" },
             { "<leader>cr", "<cmd>CMakeRun<cr>", desc = "Run" },
             { "<leader>ci", "<cmd>CMakeInstall<cr>", desc = "Install" },
-            { "<leader>ct", "<cmd>CMakeSelectBuildType<cr>", desc = "Select Build Type" },
+            {
+                "<leader>ct",
+                function()
+                    -- A build preset also sets its configure preset, then regenerates
+                    -- and links compile_commands.json to that build (the active one).
+                    local presets = require("cmake-tools").has_cmake_preset()
+                    vim.cmd(presets and "CMakeSelectBuildPreset" or "CMakeSelectBuildType")
+                end,
+                desc = "Select Build Type (preset)",
+            },
             { "<leader>cT", "<cmd>CMakeSelectTarget<cr>", desc = "Select Build Target" },
             {
                 "<leader>cG",

@@ -6,8 +6,10 @@
 # branch starts from the latest default branch on origin. An existing worktree
 # is opened as it is.
 
-# CMake 4 rejects dependencies that ask for a minimum below 3.5 without the policy option.
-CMAKE_CMD='cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_POLICY_VERSION_MINIMUM=3.5'
+# A CMake project gets the Debug / Release / RelWithDebInfo presets (cmake-presets,
+# building into build/<Type> like cmake-tools.nvim) and is configured as RelWithDebInfo
+# in the build window. Switch with `cmake-presets use Debug` or <leader>ct in nvim.
+CMAKE_CMD='cmake-presets use RelWithDebInfo'
 
 die() {
     tmux display-message -d 5000 "new worktree: $1"
@@ -53,8 +55,7 @@ if [[ ! -e $path ]]; then
         git_root worktree add --no-track -b "$branch" "$path" "origin/$default" >/dev/null
     fi
     created=true
-    # Exists before sesh connects so the build window opens inside it.
-    [[ -f $path/CMakeLists.txt ]] && mkdir -p "$path/build"
+    [[ -f $path/CMakeLists.txt ]] && command -v cmake-presets >/dev/null && cmake-presets "$path" >/dev/null 2>&1
 fi
 
 sesh connect "$path" || die "couldn't open $path"

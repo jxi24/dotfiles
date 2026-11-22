@@ -1,7 +1,9 @@
 -- Glue that makes neotest-ctest work for CMake + Catch2 projects with several build trees.
 --
---  * CTest runs in an explicitly chosen build directory (picked with `select()`, the
---    cmake-tools build directory, or <root>/build) instead of the first
+--  * CTest runs in an explicitly chosen build directory (picked with `select()`, else
+--    the build the project's compile_commands.json links to: build/<Type> from
+--    `cmake-presets use TYPE` or cmake-tools' last generate; else the cmake-tools build
+--    directory or <root>/build) instead of the first
 --    CTestTestfile.cmake that neotest-ctest happens to find.
 --  * The test executables are rebuilt before every run, so edited and newly added
 --    TEST_CASEs are picked up (catch_discover_tests registers them post-build).
@@ -94,11 +96,21 @@ local function cmake_tools_dir()
     return vim.fs.abspath(dir.filename or tostring(dir))
 end
 
+---The active build: where <root>/compile_commands.json links to (build/<Type>).
+local function linked_dir(root)
+    local link = vim.fs.joinpath(root, "compile_commands.json")
+    local st = vim.uv.fs_lstat(link)
+    local real = st and st.type == "link" and vim.uv.fs_realpath(link)
+    return real and vim.fs.dirname(real) or nil
+end
+
 ---@param root string
 ---@return string?
 function M.build_dir(root)
-    local preferred = { selected[root], cmake_tools_dir(), vim.fs.joinpath(root, "build") }
-    for i = 1, 3 do
+    -- compile_commands.json is relinked by every cmake-presets use and cmake-tools generate,
+    -- so it marks the build configured last.
+    local preferred = { selected[root], linked_dir(root), cmake_tools_dir(), vim.fs.joinpath(root, "build") }
+    for i = 1, 4 do
         local dir = preferred[i]
         if dir and vim.startswith(dir, root) and has_ctest(dir) then
             return dir
