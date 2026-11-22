@@ -23,11 +23,14 @@ local function project_id(url)
 end
 
 -- Every paper note: its name, path and Overleaf project id (nil if none).
+-- Papers/Pipeline.md (the index) and notes without a status: aren't papers,
+-- as for the vault's papers().
 function M.notes()
     local notes = {}
     for _, path in ipairs(vim.fn.globpath(M.vault, "Papers/*.md", false, true)) do
+        local name = vim.fn.fnamemodify(path, ":t:r")
         local ok, lines = pcall(vim.fn.readfile, path, "", 40)
-        local id
+        local id, status
         if ok and lines[1] == "---" then
             for i = 2, #lines do
                 if lines[i] == "---" then
@@ -37,9 +40,12 @@ function M.notes()
                 if v then
                     id = project_id(v)
                 end
+                status = status or lines[i]:match("^status:%s*(%S.*)$")
             end
         end
-        notes[#notes + 1] = { name = vim.fn.fnamemodify(path, ":t:r"), path = path, id = id }
+        if name ~= "Pipeline" and status then
+            notes[#notes + 1] = { name = name, path = path, id = id }
+        end
     end
     table.sort(notes, function(a, b) return a.name < b.name end)
     return notes
