@@ -61,7 +61,7 @@ return {
             { "<leader>Lf", function() require("overleaf").search() end, desc = "Find in project" },
             { "<leader>Lh", "<cmd>Overleaf history<cr>", desc = "History" },
             { "<leader>Ls", "<cmd>Overleaf status<cr>", desc = "Status" },
-            { "<leader>Ln", function() require("paper_notes").open() end, desc = "Paper note (vault)" },
+            { "<leader>Ln", function() require("paper_notes").open() end, desc = "Paper/grant note (vault)" },
         },
     },
 }
