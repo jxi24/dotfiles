@@ -27,6 +27,8 @@ if [[ ! -d $talks/$name ]]; then
     if command -v gtd.py >/dev/null || command -v gtd-capture >/dev/null; then
         read -rep "Date of the talk (Enter: no GTD task): " when
         if [[ -n $when ]] && due=$(date -d "$when" +%F 2>/dev/null); then
+            # "mar 12" in November means next March.
+            [[ $due < $(date +%F) && ! $when =~ [0-9]{4} ]] && due=$(date -d "$due +1 year" +%F)
             read -rep "GTD project (Enter: none): " project
             made=
             if command -v gtd.py >/dev/null; then
