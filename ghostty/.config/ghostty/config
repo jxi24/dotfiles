@@ -40,3 +40,5 @@ keybind = ctrl+alt+l=toggle_command_palette
 # wezterm: CTRL|SHIFT m -> Monitoring workspace. Sent as "C-a M" so tmux
 # handles it with a plain prefix binding (see tmux.conf).
 keybind = ctrl+shift+m=text:\x01M
+# ctrl+shift+t: a new tmux window in the current folder (prefix + c)
+keybind = ctrl+shift+t=text:\x01c
